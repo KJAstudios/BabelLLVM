@@ -2,35 +2,35 @@ Babel Programming Language
 
 Syntax:
 bool
-byte
-break
-case
-catch
-class
-const
-continue
-do
-double
-else
-enum
-extern
-false
-float
-for
-foreach
-if
-in
-int
-is
-long
-namespace?
-new
-null
-private
-protected
-public
-return
-short
+byte - paita (Maori/Samoan)
+break - murda (Estonian)
+case - Ovitek (Slovenian)
+catch - glac (Scots Gaelic)
+class - клас [klas] (Ukrainian, others)
+const - m (Hausa)
+continue - doorgaan (Dutch)
+do - ചെയ്യുക [cheyyuka] (Malayalam)
+double - kaksinkertainen (Finnish)
+else - それ以外 (Japanese)
+enum - hesabu (Swahili)
+extern - daşarky (Turkmen)
+false - bréagach (Irish)
+float - Schwammen (Luxembourgish)
+for - ለ [le] (Amharic)
+foreach - EXTENDED WORK
+if - əgər (Azerbaijani)
+in - EXTENDED WORK
+int - yekjimar (Kurdish)
+is - da (Basque)
+long - 	நீளமானது [nīḷamāṉatu] (Tamil)
+namespace? - EXTENDED WORK
+new - tshiab (Hmong)
+null - batal (Indonesian)
+private - privatus (Latin)
+protected - protégé (French)
+public - public (english)
+return - zurückkehren (German)
+short 
 sizeof
 struct
 switch
