@@ -39,26 +39,27 @@ try - probeer (Afrikaans)
 typeof - kalite (Hatian Creole)
 void - tomrom (Norwegian)
 while - mientras (Spanish)
-+
--
-*
-/
-%
-==
-!=
-<
->
-<=
->=
-&&
-||
-=
++ - ⊕
+- - ⊖
+* - ×
+/ - ÷
+% - ⊘
+== - ≡
+!= - ≠
+< - ≺
+> - ≻
+<= - ≼
+>= - ≽
+&& - ⋀
+|| - ⋁
+= - ≔
 +=
 -=
 *=
 /=
-++
+++ - ⧺
 --
 +
 -
-!
+! - ¬
+; - ~
