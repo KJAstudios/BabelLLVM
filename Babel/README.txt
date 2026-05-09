@@ -63,3 +63,4 @@ while - mientras (Spanish)
 -
 ! - ¬
 ; - ~
+// - ✎
