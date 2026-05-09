@@ -30,15 +30,15 @@ private - privatus (Latin)
 protected - protégé (French)
 public - public (english)
 return - zurückkehren (German)
-short 
-sizeof
-struct
-switch
-true
-try
-typeof
-void
-while
+short - kgutshoanyane (Sesotho)
+sizeof - μέγεθος [Mégethos] (Greek)
+struct - uppbyggingu (Icelandic)
+switch - kaloni (Albanian)
+true - gwir (Welsh)
+try - probeer (Afrikaans)
+typeof - kalite (Hatian Creole)
+void - tomrom (Norwegian)
+while - mientras (Spanish)
 +
 -
 *
