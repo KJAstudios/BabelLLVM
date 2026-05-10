@@ -9,4 +9,8 @@ Babel::Token Lexer::GetNextToken() {
 	}
 	const char *currentCharacterPtr = currentLine.c_str();
 }
+
+std::vector<char> *Lexer::GetNextCharacter(){
+	std::vector<char> nextCharacter;
+}
 } // namespace Babel

@@ -59,8 +59,6 @@ while - mientras (Spanish)
 /=
 ++ - ⧺
 --
-+
--
 ! - ¬
 ; - ~
 // - ✎
