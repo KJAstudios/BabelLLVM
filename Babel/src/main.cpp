@@ -12,6 +12,6 @@ int main(int argCount, char *argValues[]) {
   lexer.LoadBuffer();
   Babel::Token token = lexer.GetNextToken();
   while (token != Babel::Token::tok_eof) {
-    token =lexer.GetNextToken();
+    token = lexer.GetNextToken();
   }
 }

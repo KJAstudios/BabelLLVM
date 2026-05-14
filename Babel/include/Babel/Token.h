@@ -14,7 +14,9 @@ enum class Token {
   tok_print,
   tok_int,
   tok_double,
-  tok_error
+  tok_number,
+  tok_error,
+  tok_empty
 };
 }
 #endif
