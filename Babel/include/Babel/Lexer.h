@@ -27,6 +27,10 @@ private:
 public:
   Babel::Token GetNextToken();
   void LoadBuffer(std::string *filename = nullptr);
+  // value/string getters for the current token, used by the parser
+  llvm::StringRef *GetOperatorStr() { return &operatorStr; }
+  llvm::StringRef *GetControlCharacter() { return &controlCharacter; }
+  llvm::StringRef *GetIdentifierStr() { return &identifierStr; }
 
 private:
   void TryLoadCodeIntoBuffer(
@@ -36,8 +40,10 @@ private:
   void SkipComment();
   Babel::Token LexNumberToken();
   Babel::Token LexWhitespaceTerminatedToken(unsigned charSize);
-  Babel::Token LexControlCharTerminatedToken(unsigned charSize, llvm::StringRef nextChar);
-  Babel::Token LexOperatorTerminatedToken(unsigned charSize, llvm::StringRef nextChar);
+  Babel::Token LexControlCharTerminatedToken(unsigned charSize,
+                                             llvm::StringRef nextChar);
+  Babel::Token LexOperatorTerminatedToken(unsigned charSize,
+                                          llvm::StringRef nextChar);
   Babel::Token GetTokIdentifierOrKeyword(llvm::StringRef identifier);
 
   // lexing helper functions
@@ -45,10 +51,7 @@ private:
   bool IsControlCharacter(llvm::StringRef character);
   bool IsOperatorCharacter(llvm::StringRef character);
   bool IsWhitespaceCharacter(char character);
-  // value/string getters for the current token, used by the parser
-  llvm::StringRef *GetOperatorStr() { return &operatorStr; }
-  llvm::StringRef *GetControlCharacter() { return &controlCharacter; }
-  llvm::StringRef *GetIdentifierStr() { return &identifierStr; }
 };
+
 } // namespace Babel
 #endif

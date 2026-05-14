@@ -1,5 +1,6 @@
 #ifndef PARSER_H
 #define PARSER_H
+#include "Babel/AbstractSyntaxTree.h"
 #include "Babel/Lexer.h"
 #include "Babel/Token.h"
 #include <memory>
@@ -12,9 +13,14 @@ private:
 public:
   Parser() = delete;
   explicit Parser(std::string *filename = nullptr);
+  void Parse();
+  std::unique_ptr<StatementAST> ParseStatement();
+  std::unique_ptr<ExpressionAST> ParseExpression();
 
-  private:
+private:
   Babel::Token GetNextToken();
+  std::unique_ptr<StatementAST> ParseIfStatement();
+  std::unique_ptr<StatementAST> ParseAssignmentStatement();
 };
 } // namespace Babel
 #endif

@@ -6,6 +6,7 @@
 namespace Babel {
 class StatementAST {
 public:
+  StatementAST() = default;
   StatementAST(const StatementAST &) = default;
   StatementAST(StatementAST &&) = delete;
   StatementAST &operator=(const StatementAST &) = default;
@@ -15,6 +16,7 @@ public:
 
 class ExpressionAST {
 public:
+  ExpressionAST() = default;
   ExpressionAST(const ExpressionAST &) = default;
   ExpressionAST(ExpressionAST &&) = delete;
   ExpressionAST &operator=(const ExpressionAST &) = default;
@@ -22,18 +24,30 @@ public:
   virtual ~ExpressionAST() = default;
 };
 
-class IfSatementAST : public StatementAST {
+class IfStatementAST : public StatementAST {
 private:
-  std::unique_ptr<ExpressionAST> *condition;
-  std::unique_ptr<StatementAST> *thenBranch;
-  std::unique_ptr<StatementAST> *elseBranch;
+  std::unique_ptr<ExpressionAST> condition;
+  std::unique_ptr<StatementAST> thenBranch;
+  std::unique_ptr<StatementAST> elseBranch;
+
+public:
+  IfStatementAST(std::unique_ptr<ExpressionAST> condition,
+                 std::unique_ptr<StatementAST> thenBranch,
+                 std::unique_ptr<StatementAST> elseBranch)
+      : condition(std::move(condition)), thenBranch(std::move(thenBranch)),
+        elseBranch(std::move(elseBranch)) {}
 };
 
-class AssignmentSatementAST : public StatementAST {
+class AssignmentStatementAST : public StatementAST {
 private:
-  std::string name;
+  llvm::StringRef name;
   // todo: add type information
-  std::unique_ptr<ExpressionAST> *initializer;
+  std::unique_ptr<ExpressionAST> initializer;
+
+public:
+  AssignmentStatementAST(llvm::StringRef name,
+                         std::unique_ptr<ExpressionAST> initializer)
+      : name(name), initializer(std::move(initializer)) {}
 };
 
 class IntExpressionAST : public ExpressionAST {
@@ -49,8 +63,8 @@ private:
 class BinaryExpressionAST : public ExpressionAST {
 private:
   llvm::StringRef binaryOperator;
-  std::unique_ptr<ExpressionAST> *lhs;
-  std::unique_ptr<ExpressionAST> *rhs;
+  std::unique_ptr<ExpressionAST> lhs;
+  std::unique_ptr<ExpressionAST> rhs;
 };
 
 } // namespace Babel
