@@ -10,7 +10,11 @@ enum class Token {
   tok_for,
   tok_while,
   tok_operator,
-  tok_misc
+  tok_control,
+  tok_print,
+  tok_int,
+  tok_double,
+  tok_error
 };
 }
 #endif

@@ -14,5 +14,6 @@ file(GLOB_RECURSE SRCS "src/*.cpp")
 
 add_executable(babel-llvm ${SRCS})
 
-llvm_map_components_to_libnames(llvm_libs core support irreader)
-target_link_libraries(babel-llvm ${llvm_libs})
+llvm_map_components_to_libnames(LLVM_LIBS core orcjit native)
+target_link_libraries(babel-llvm ${LLVM_LIBS})
+target_link_options(babel-llvm PRIVATE -rdynamic)
