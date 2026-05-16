@@ -39,7 +39,7 @@ try - probeer (Afrikaans)
 typeof - kalite (Hatian Creole)
 void - tomrom (Norwegian)
 while - mientras (Spanish)
-print - tisk (Czech)
+
 + - ⊕
 - - ⊖
 * - ×
@@ -67,3 +67,8 @@ print - tisk (Czech)
  } - ꧂
 ( - ⟅
 ) - ⟆
+
+Built-in Library Functions:
+print - tisk (Czech)
+
+Main function name: 主要的 - Chineese

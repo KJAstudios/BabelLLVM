@@ -11,8 +11,7 @@ namespace Babel {
 class Lexer {
 private:
   // core input buffer
-  // TODO: keep the initial memory buffer, so that these don't become invalid if
-  // the memory buffer is deallocated
+  std::unique_ptr<llvm::MemoryBuffer> rawMemoryBuffer;
   llvm::StringRef stringCodeBuffer;
 
   // string storage for current token types
@@ -31,11 +30,9 @@ public:
   llvm::StringRef *GetOperatorStr() { return &operatorStr; }
   llvm::StringRef *GetControlCharacter() { return &controlCharacter; }
   llvm::StringRef *GetIdentifierStr() { return &identifierStr; }
+  llvm::StringRef *GetNumberStr() { return &numberStr; }
 
 private:
-  void TryLoadCodeIntoBuffer(
-      llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> memoryBuffer);
-
   // core functions for the token parsing loop
   void SkipComment();
   Babel::Token LexNumberToken();

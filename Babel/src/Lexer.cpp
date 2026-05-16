@@ -13,21 +13,23 @@
 namespace Babel {
 void Lexer::LoadBuffer(std::string *filename) {
   if (filename != nullptr) {
-    TryLoadCodeIntoBuffer(llvm::MemoryBuffer::getFile(*filename));
-  }
-
-  TryLoadCodeIntoBuffer(llvm::MemoryBuffer::getSTDIN());
-}
-
-void Lexer::TryLoadCodeIntoBuffer(
-    const llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> memoryBuffer) {
-  if (!memoryBuffer) {
-    std::error_code error = memoryBuffer.getError();
-    std::cerr << error;
+    auto memoryBuffer = llvm::MemoryBuffer::getFile(*filename);
+    if (!memoryBuffer) {
+      std::cerr << memoryBuffer.getError();
+      return;
+    }
+    rawMemoryBuffer = std::move(memoryBuffer.get());
+    stringCodeBuffer = rawMemoryBuffer->getBuffer();
     return;
   }
 
-  stringCodeBuffer = memoryBuffer.get()->getBuffer();
+  auto memoryBuffer = llvm::MemoryBuffer::getSTDIN();
+  if (!memoryBuffer) {
+    std::cerr << memoryBuffer.getError();
+    return;
+  }
+  rawMemoryBuffer = std::move(memoryBuffer.get());
+  stringCodeBuffer = rawMemoryBuffer->getBuffer();
 }
 
 Babel::Token Lexer::GetNextToken() {
@@ -58,15 +60,22 @@ Babel::Token Lexer::GetNextToken() {
 
     // if the char size is 1 and it's whitespace, the token has ended
     if (charSize == 1 && IsWhitespaceCharacter(stringCodeBuffer[offset])) {
+      // but if it's the first character, ignore it and move to the next
+      // character
+      if (offset == 0) {
+        stringCodeBuffer = stringCodeBuffer.drop_front(1);
+        continue;
+      }
+
       return LexWhitespaceTerminatedToken(charSize);
     }
 
     if (IsControlCharacter(nextChar)) {
-     return LexControlCharTerminatedToken(charSize, nextChar);
+      return LexControlCharTerminatedToken(charSize, nextChar);
     }
 
     if (IsOperatorCharacter(nextChar)) {
-      return LexOperatorTerminatedToken(charSize,  nextChar);
+      return LexOperatorTerminatedToken(charSize, nextChar);
     }
 
     // move to the next character
@@ -88,9 +97,9 @@ void Lexer::SkipComment() {
 Babel::Token Lexer::LexNumberToken() {
 
   int dotCount = 0;
-  char curChar = stringCodeBuffer[offset];
 
   while (offset < stringCodeBuffer.size()) {
+    char curChar = stringCodeBuffer[offset];
 
     // if the next character isn't ascii, we need to check if it's a valid
     // unicode operator or control. We also need to check if it's a '~'
@@ -166,6 +175,7 @@ Babel::Token Lexer::LexWhitespaceTerminatedToken(unsigned charSize) {
 
 Babel::Token Lexer::LexControlCharTerminatedToken(unsigned charSize,
                                                   llvm::StringRef nextChar) {
+
   // if the first character is a control character, it's a control token
   if (offset == 0) {
     controlCharacter = nextChar;
@@ -175,7 +185,8 @@ Babel::Token Lexer::LexControlCharTerminatedToken(unsigned charSize,
 
   // else it's an identifier found before the control character
   llvm::StringRef token = llvm::StringRef(stringCodeBuffer.data(), offset);
-  stringCodeBuffer = stringCodeBuffer.drop_front(offset + charSize);
+  // only drop the identifier, keep the control character for the next token
+  stringCodeBuffer = stringCodeBuffer.drop_front(offset);
   return GetTokIdentifierOrKeyword(token);
 }
 
@@ -201,9 +212,6 @@ Babel::Token Lexer::GetTokIdentifierOrKeyword(llvm::StringRef identifier) {
   }
   if (identifier.str() == "それ以外") {
     return Token::tok_else;
-  }
-  if (identifier.str() == "tisk") {
-    return Token::tok_print;
   }
   if (identifier.str() == "ለ") {
     return Token::tok_for;

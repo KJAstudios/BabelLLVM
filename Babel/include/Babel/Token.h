@@ -11,7 +11,6 @@ enum class Token {
   tok_while,
   tok_operator,
   tok_control,
-  tok_print,
   tok_int,
   tok_double,
   tok_number,

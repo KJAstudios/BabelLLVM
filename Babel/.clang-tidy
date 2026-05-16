@@ -1,1 +1,1 @@
-Checks: "*,-fuchsia-*,-llvmlibc-*,-altera-*,-modernize-use-trailing-return-type,-misc-no-recursion,-modernize-use-nodiscard,-modernize-use-pass-by-value"
+Checks: "*,-fuchsia-*,-llvmlibc-*,-altera-*,-abseil-*,-modernize-use-trailing-return-type,-misc-no-recursion,-modernize-use-nodiscard,-modernize-use-pass-by-value"
