@@ -1,4 +1,6 @@
-#include "Babel/Parser.h"
+#include "Babel/Babel.h"
+
+namespace Babel {
 
 int main(int argCount, char *argValues[]) {
   if (argCount > 1) {
@@ -6,6 +8,7 @@ int main(int argCount, char *argValues[]) {
     return 1;
   }
 
-  Babel::Parser parser = Babel::Parser(nullptr);
-  parser.Parse();
-}
+  Babel babel = Babel();
+  babel.Parse();
+};
+} // namespace Babel

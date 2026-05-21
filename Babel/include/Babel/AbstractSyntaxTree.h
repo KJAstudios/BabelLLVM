@@ -1,5 +1,6 @@
 #ifndef ABSTRACTSYNTAXTREE_H
 #define ABSTRACTSYNTAXTREE_H
+#include "Babel/Visitor.h"
 #include <iostream>
 #include <llvm-18/llvm/ADT/StringRef.h>
 #include <memory>
@@ -14,6 +15,7 @@ public:
   StatementAST &operator=(const StatementAST &) = default;
   StatementAST &operator=(StatementAST &&) = delete;
   virtual ~StatementAST() = default;
+  virtual void Visit(Visitor &visitor) = 0;
 };
 
 class ExpressionAST {
@@ -24,6 +26,7 @@ public:
   ExpressionAST &operator=(const ExpressionAST &) = default;
   ExpressionAST &operator=(ExpressionAST &&) = delete;
   virtual ~ExpressionAST() = default;
+  virtual void Visit(Visitor &visitor) = 0;
 };
 
 // statement block is a sequence of statements that are executed in order. This
@@ -37,6 +40,9 @@ public:
   StatementBlockAST() { std::cerr << "Created statement block\n"; }
   void AddStatement(std::unique_ptr<StatementAST> statement) {
     body.push_back(std::move(statement));
+  }
+  void Visit(class Visitor &visitor) override {
+    visitor.VisitStatementBlock(this);
   }
 };
 
@@ -53,6 +59,7 @@ public:
               << this->args.size() << " arguments\n";
   }
   std::string *GetName() { return &name; }
+  void Visit(class Visitor &visitor) { visitor.VisitPrototype(this); }
 };
 
 class FunctionAST {
@@ -65,8 +72,10 @@ public:
   explicit FunctionAST(std::unique_ptr<PrototypeAST> prototype,
                        std::unique_ptr<StatementBlockAST> body)
       : prototype(std::move(prototype)), body(std::move(body)) {
-    std::cerr << "Created function with name " << this->prototype->GetName()->c_str() << "\n";
+    std::cerr << "Created function with name "
+              << this->prototype->GetName()->c_str() << "\n";
   }
+  void Visit(class Visitor &visitor) { visitor.VisitFunction(this); }
 };
 
 class FunctionCallStatementAST : public StatementAST {
@@ -84,6 +93,9 @@ public:
               << this->functionName << " and " << this->arguments.size()
               << " arguments\n";
   }
+  void Visit(class Visitor &visitor) override {
+    visitor.VisitFunctionCallStatement(this);
+  }
 };
 
 class IfStatementAST : public StatementAST {
@@ -100,6 +112,9 @@ public:
         elseBranch(std::move(elseBranch)) {
     std::cerr << "Created if statement\n";
   }
+  void Visit(class Visitor &visitor) override {
+    visitor.VisitIfStatement(this);
+  }
 };
 
 class AssignmentStatementAST : public StatementAST {
@@ -115,6 +130,9 @@ public:
     std::cerr << "Created assignment statement with name " << this->name
               << "\n";
   }
+  void Visit(class Visitor &visitor) override {
+    visitor.VisitAssignmentStatement(this);
+  }
 };
 
 class VariableExpressionAST : public ExpressionAST {
@@ -125,6 +143,9 @@ public:
   VariableExpressionAST() = delete;
   explicit VariableExpressionAST(std::string name) : name(std::move(name)) {
     std::cerr << "Created variable expression with name " << this->name << "\n";
+  }
+  void Visit(class Visitor &visitor) override {
+    visitor.VisitVariableExpression(this);
   }
 };
 
@@ -137,11 +158,24 @@ public:
   explicit IntExpressionAST(int value) : value(value) {
     std::cerr << "Created int expression with value " << this->value << "\n";
   }
+  int GetValue(){return value;}
+  void Visit(class Visitor &visitor) override {
+    visitor.VisitIntExpression(this);
+  }
 };
 
 class DoubleExpressionAST : public ExpressionAST {
 private:
   double value;
+
+public:
+  DoubleExpressionAST() = delete;
+  explicit DoubleExpressionAST(double value) : value(value) {
+    std::cerr << "Created double expression with value " << this->value << "\n";
+  }
+  void Visit(class Visitor &visitor) override {
+    visitor.VisitDoubleExpression(this);
+  }
 };
 
 class BinaryExpressionAST : public ExpressionAST {
@@ -159,6 +193,9 @@ public:
         rhs(std::move(rhs)) {
     std::cerr << "Created binary expression with operator "
               << this->binaryOperator << "\n";
+  }
+  void Visit(class Visitor &visitor) override {
+    visitor.VisitBinaryExpression(this);
   }
 };
 
