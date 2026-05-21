@@ -240,7 +240,7 @@ Parser::ParseFunctionCall(std::string functionName) {
   }
   GetNextToken(); // consume the ~ token
 
-  return std::make_unique<FunctionCallStatementAST>(functionName,
+  return std::make_unique<FunctionCallStatementAST>(std::move(functionName),
                                                     std::move(arguments));
 }
 
@@ -264,7 +264,7 @@ Parser::ParseAssignmentStatement(std::string identifier) {
         << "Failed to parse initializer expression in assignment statement\n";
     return nullptr;
   }
-  return std::make_unique<AssignmentStatementAST>(identifier,
+  return std::make_unique<AssignmentStatementAST>(std::move(identifier),
                                                   std::move(initializer));
 }
 

@@ -30,7 +30,7 @@ public:
 // is currently only used for the blocks of for statements, but will need to be
 // expanded on
 class StatementBlockAST : public StatementAST {
-protected:
+private:
   std::vector<std::unique_ptr<StatementAST>> body;
 
 public:

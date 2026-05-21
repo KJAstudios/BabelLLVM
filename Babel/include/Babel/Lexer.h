@@ -5,7 +5,6 @@
 #include <llvm-18/llvm/ADT/StringRef.h>
 #include <memory>
 #include <string>
-#include <vector>
 
 namespace Babel {
 class Lexer {
@@ -44,7 +43,7 @@ private:
   Babel::Token GetTokIdentifierOrKeyword(llvm::StringRef identifier);
 
   // lexing helper functions
-  unsigned int GetCharSize(const char pointer);
+  unsigned int GetCharSize(char pointer);
   bool IsControlCharacter(llvm::StringRef character);
   bool IsOperatorCharacter(llvm::StringRef character);
   bool IsWhitespaceCharacter(char character);
