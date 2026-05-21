@@ -23,7 +23,7 @@ public:
 
 private:
   void InitOperatorPrecedence();
-  Babel::Token GetNextToken();
+  void GetNextToken();
   std::unique_ptr<StatementAST> ParseIfStatement();
   std::unique_ptr<StatementAST> ParseAssignmentStatement(std::string identifier);
   std::unique_ptr<StatementAST> ParseStatementBlock();

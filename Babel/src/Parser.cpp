@@ -22,14 +22,14 @@ void Parser::InitOperatorPrecedence() {
   operatorPrecedence["÷"] = 20;
 }
 
-Babel::Token Parser::GetNextToken() {
-  tokenState = lexer->GetNextToken();
-  return tokenState;
-}
+// don't return the token type so we rely on the tokenState member variable to
+// determine the current token. This is to avoid ambiguity due to the recursive
+// nature of the parsing functions, where each function can consume the token.
+void Parser::GetNextToken() { tokenState = lexer->GetNextToken(); }
 
 void Parser::Parse() {
-  Babel::Token token = GetNextToken();
-  switch (token) {
+  GetNextToken();
+  switch (tokenState) {
   case Token::tok_eof:
     return;
   case Token::tok_if:
@@ -87,16 +87,16 @@ std::unique_ptr<StatementAST> Parser::ParseStatement() {
 }
 
 std::unique_ptr<StatementAST> Parser::ParseIfStatement() {
-  Babel::Token token = GetNextToken(); // consume the if token
+  GetNextToken(); // consume the if token
 
-  if (token != Token::tok_control ||
+  if (tokenState != Token::tok_control ||
       lexer->GetControlCharacter()->str() != "⟅") {
     std::cerr << "Expected ⟅ after if statement\n";
     return nullptr;
   }
 
-  token = GetNextToken();
-  if (token != Token::tok_number && token != Token::tok_identifier) {
+  GetNextToken();
+  if (tokenState != Token::tok_number && tokenState != Token::tok_identifier) {
     std::cerr << "Expected condition after if statement\n";
     return nullptr;
   }
@@ -109,8 +109,8 @@ std::unique_ptr<StatementAST> Parser::ParseIfStatement() {
     return nullptr;
   }
 
-  token = GetNextToken(); // consume the ⟆
-  if (token != Token::tok_control ||
+  GetNextToken(); // consume the ⟆
+  if (tokenState != Token::tok_control ||
       lexer->GetControlCharacter()->str() != "꧁") {
     std::cerr << "Expected ꧁ before if statement then branch\n";
     return nullptr;
@@ -123,9 +123,9 @@ std::unique_ptr<StatementAST> Parser::ParseIfStatement() {
   }
 
   std::unique_ptr<StatementAST> elseBranch = nullptr;
-  if (token == Token::tok_else) {
-    token = GetNextToken();
-    if (token != Token::tok_control ||
+  if (tokenState == Token::tok_else) {
+    GetNextToken();
+    if (tokenState != Token::tok_control ||
         lexer->GetControlCharacter()->str() != "꧁") {
       std::cerr << "Expected ꧁ before if statement else branch\n";
       return nullptr;
@@ -191,13 +191,13 @@ std::unique_ptr<StatementAST> Parser::ParseStatementBlock() {
 
 std::unique_ptr<StatementAST> Parser::ParseIdentifierStatement() {
   std::string identifier = lexer->GetIdentifierStr()->str();
-  Babel::Token token = GetNextToken(); // consume the identifier token
+ GetNextToken(); // consume the identifier token
 
-  if (token == Token::tok_operator && lexer->GetOperatorStr()->str() == "≔") {
+  if (tokenState == Token::tok_operator && lexer->GetOperatorStr()->str() == "≔") {
     return ParseAssignmentStatement(identifier);
   }
 
-  if (token == Token::tok_control &&
+  if (tokenState == Token::tok_control &&
       lexer->GetControlCharacter()->str() == "⟅") {
     return ParseFunctionCall(identifier);
   }
@@ -232,20 +232,28 @@ Parser::ParseFunctionCall(std::string functionName) {
 
   GetNextToken(); // consume the ⟆ token
 
+  if (tokenState != Token::tok_control ||
+      lexer->GetControlCharacter()->str() != "~") {
+    std::cerr << "Expected ~ at the end of the function call statement. "
+                 "Multiple arguments are not supported yet.\n";
+    return nullptr;
+  }
+  GetNextToken(); // consume the ~ token
+
   return std::make_unique<FunctionCallStatementAST>(functionName,
                                                     std::move(arguments));
 }
 
 std::unique_ptr<StatementAST>
 Parser::ParseAssignmentStatement(std::string identifier) {
-  Babel::Token token = GetNextToken(); // consume the identifier token
-  if (token != Token::tok_operator || lexer->GetOperatorStr()->str() != "≔") {
+  if (tokenState != Token::tok_operator ||
+      lexer->GetOperatorStr()->str() != "≔") {
     std::cerr << "Expected ≔ after identifier in assignment statement\n";
     return nullptr;
   }
 
-  token = GetNextToken(); // consume the ≔ token
-  if (token != Token::tok_number && token != Token::tok_identifier) {
+  GetNextToken(); // consume the ≔ token
+  if (tokenState != Token::tok_number && tokenState != Token::tok_identifier) {
     std::cerr << "Expected expression after ≔ in assignment statement\n";
     return nullptr;
   }

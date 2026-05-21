@@ -65,8 +65,7 @@ public:
   explicit FunctionAST(std::unique_ptr<PrototypeAST> prototype,
                        std::unique_ptr<StatementBlockAST> body)
       : prototype(std::move(prototype)), body(std::move(body)) {
-    std::cerr << "Created function with name " << this->prototype->GetName()
-              << "\n";
+    std::cerr << "Created function with name " << this->prototype->GetName()->c_str() << "\n";
   }
 };
 
