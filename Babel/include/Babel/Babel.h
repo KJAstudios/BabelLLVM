@@ -3,7 +3,7 @@
 #include "CodegenVisitor.h"
 #include "Babel/Parser.h"
 #include <memory>
-#include <llvm/IR/IRBuilder.h>
+#include <llvm-18/llvm/IR/IRBuilder.h>
 namespace Babel {
 class Babel {
 private:

@@ -1,7 +1,7 @@
 #ifndef SCOPESTACK_H
 #define SCOPESTACK_H
-#include <llvm-18/llvm/IR/Instructions.h>
-#include <llvm-18/llvm/IR/Value.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/Value.h>
 #include <map>
 #include <string>
 #include <vector>

@@ -2,9 +2,9 @@
 #define CODGEN_VISITOR_H
 #include "Babel/ScopeStack.h"
 #include "Babel/Visitor.h"
-#include <llvm-18/llvm/IR/Instructions.h>
-#include <llvm-18/llvm/IR/LLVMContext.h>
-#include <llvm-18/llvm/IR/Module.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
 namespace Babel {
 class CodegenVisitor : public Visitor {
@@ -20,7 +20,7 @@ private:
   std::unique_ptr<ScopeStack> scopeStack;
 
 public:
-  explicit CodegenVisitor(llvm::LLVMContext *context,
+  CodegenVisitor(llvm::LLVMContext *context,
                           llvm::IRBuilder<> *builder, llvm::Module *module);
   void VisitStatementBlock(StatementBlockAST *statmentBlock) override;
   void VisitPrototype(PrototypeAST *prototype) override;
