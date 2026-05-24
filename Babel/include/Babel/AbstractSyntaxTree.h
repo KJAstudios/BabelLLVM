@@ -41,6 +41,7 @@ public:
   void AddStatement(std::unique_ptr<StatementAST> statement) {
     body.push_back(std::move(statement));
   }
+  std::vector<std::unique_ptr<StatementAST>> *GetBody() { return &body; }
   void Visit(class Visitor &visitor) override {
     visitor.VisitStatementBlock(this);
   }
@@ -59,6 +60,7 @@ public:
               << this->args.size() << " arguments\n";
   }
   std::string *GetName() { return &name; }
+  std::vector<std::string> *GetArgs(){return &args;}
   void Visit(class Visitor &visitor) { visitor.VisitPrototype(this); }
 };
 
@@ -112,6 +114,9 @@ public:
         elseBranch(std::move(elseBranch)) {
     std::cerr << "Created if statement\n";
   }
+  ExpressionAST *GetCondition() { return condition.get(); }
+  StatementAST *GetThenBranch() { return thenBranch.get(); }
+  StatementAST *GetElseBranch() { return elseBranch.get(); }
   void Visit(class Visitor &visitor) override {
     visitor.VisitIfStatement(this);
   }
@@ -130,6 +135,8 @@ public:
     std::cerr << "Created assignment statement with name " << this->name
               << "\n";
   }
+  std::string GetName() { return name; }
+  ExpressionAST *GetInitalizer() { return initializer.get(); }
   void Visit(class Visitor &visitor) override {
     visitor.VisitAssignmentStatement(this);
   }
@@ -144,6 +151,7 @@ public:
   explicit VariableExpressionAST(std::string name) : name(std::move(name)) {
     std::cerr << "Created variable expression with name " << this->name << "\n";
   }
+  std::string *GetName() { return &name; }
   void Visit(class Visitor &visitor) override {
     visitor.VisitVariableExpression(this);
   }
@@ -158,7 +166,7 @@ public:
   explicit IntExpressionAST(int value) : value(value) {
     std::cerr << "Created int expression with value " << this->value << "\n";
   }
-  int GetValue(){return value;}
+  int GetValue() { return value; }
   void Visit(class Visitor &visitor) override {
     visitor.VisitIntExpression(this);
   }
@@ -173,6 +181,7 @@ public:
   explicit DoubleExpressionAST(double value) : value(value) {
     std::cerr << "Created double expression with value " << this->value << "\n";
   }
+  double GetValue() { return value; }
   void Visit(class Visitor &visitor) override {
     visitor.VisitDoubleExpression(this);
   }
