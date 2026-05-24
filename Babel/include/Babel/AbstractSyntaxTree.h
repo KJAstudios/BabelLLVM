@@ -77,6 +77,10 @@ public:
     std::cerr << "Created function with name "
               << this->prototype->GetName()->c_str() << "\n";
   }
+  std::unique_ptr<PrototypeAST> ClaimPrototype(){
+    return std::move(prototype);
+  }
+  StatementBlockAST *GetBody(){return body.get();}
   void Visit(class Visitor &visitor) { visitor.VisitFunction(this); }
 };
 
