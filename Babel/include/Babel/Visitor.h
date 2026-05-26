@@ -2,6 +2,7 @@
 #define VISITOR_H
 
 namespace Babel {
+class ProgramAST;
 class StatementBlockAST;
 class PrototypeAST;
 class FunctionAST;
@@ -20,6 +21,7 @@ public:
   Visitor &operator=(const Visitor &) = default;
   Visitor &operator=(Visitor &&) = delete;
   virtual ~Visitor() = default;
+  virtual void VisitProgram(ProgramAST *program) = 0;
   virtual void VisitStatementBlock(StatementBlockAST *statmentBlock) = 0;
   virtual void VisitPrototype(PrototypeAST *prototype) = 0;
   virtual void VisitFunction(FunctionAST *function) = 0;

@@ -9,6 +9,6 @@ int main(int argCount, char *argValues[]) {
   }
 
   Babel babel = Babel();
-  babel.Parse();
+  babel.Run();
 };
 } // namespace Babel

@@ -39,6 +39,7 @@ try - probeer (Afrikaans)
 typeof - kalite (Hatian Creole)
 void - tomrom (Norwegian)
 while - mientras (Spanish)
+function - funkcjonować (Polish)
 
 + - ⊕
 - - ⊖
@@ -67,7 +68,7 @@ while - mientras (Spanish)
  } - ꧂
 ( - ⟅
 ) - ⟆
-
+, - ᨞
 Built-in Library Functions:
 print - tisk (Czech)
 

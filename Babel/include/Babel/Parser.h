@@ -16,8 +16,7 @@ private:
 public:
   Parser() = delete;
   explicit Parser(std::string *filename = nullptr);
-  void Parse();
-  std::unique_ptr<FunctionAST> ParseTopLevelFunction();
+  std::unique_ptr<ProgramAST> Parse();
   std::unique_ptr<StatementAST> ParseStatement();
   std::unique_ptr<ExpressionAST> ParseExpression();
 
@@ -28,7 +27,7 @@ private:
   std::unique_ptr<StatementAST> ParseAssignmentStatement(std::string identifier);
   std::unique_ptr<StatementAST> ParseStatementBlock();
   std::unique_ptr<StatementAST> ParseIdentifierStatement();
-  std::unique_ptr<StatementAST> ParseFunction();
+  std::unique_ptr<FunctionAST> ParseFunction();
   std::unique_ptr<StatementAST> ParseFunctionCall(std::string functionName);
   std::unique_ptr<ExpressionAST> ParsePrimary();
   std::unique_ptr<ExpressionAST>

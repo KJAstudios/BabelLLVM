@@ -5,6 +5,7 @@
 #include <llvm-18/llvm/ADT/StringRef.h>
 #include <memory>
 #include <string>
+#include <utility>
 namespace Babel {
 Babel::Parser::Parser(std::string *filename) : tokenState(Token::tok_empty) {
   lexer = std::make_unique<Lexer>();
@@ -27,52 +28,26 @@ void Parser::InitOperatorPrecedence() {
 // nature of the parsing functions, where each function can consume the token.
 void Parser::GetNextToken() { tokenState = lexer->GetNextToken(); }
 
-void Parser::Parse() {
+std::unique_ptr<ProgramAST> Parser::Parse() {
   GetNextToken();
-  switch (tokenState) {
-  case Token::tok_eof:
-    return;
-  case Token::tok_if:
-    // case Token::tok_for: // for loops not supported yet
-  case Token::tok_identifier:
-    Parser::ParseTopLevelFunction();
-    break;
-  default:
-    std::cerr << "Token not supported as a starting statement or expression\n";
-    return;
+  if (tokenState == Token::tok_eof) {
+    std::cerr << "No functions found";
+    return nullptr;
   }
-}
-
-std::unique_ptr<FunctionAST> Parser::ParseTopLevelFunction() {
-  std::unique_ptr<StatementBlockAST> mainBody =
-      std::make_unique<StatementBlockAST>();
-
+  std::unique_ptr<ProgramAST> program = std::make_unique<ProgramAST>();
   while (tokenState != Token::tok_eof) {
     switch (tokenState) {
-    case Token::tok_if:
-    case Token::tok_identifier: {
-      std::unique_ptr<StatementAST> statement = ParseStatement();
-
-      if (statement == nullptr) {
-        std::cerr << "Failed to parse statement in Top Level Function\n";
-        return nullptr;
-      }
-
-      mainBody->AddStatement(std::move(statement));
-      break;
-    }
+    case Token::tok_eof:
+      return nullptr;
+    case Token::tok_function:
+      program->AddFunction(ParseFunction());
     default:
-      std::cerr
-          << "Token not supported as a starting statement or expression\n";
+      std::cerr << "Only functions are supported at the top level\n";
       return nullptr;
     }
   }
 
-  std::unique_ptr<PrototypeAST> mainPrototype =
-      std::make_unique<PrototypeAST>("main", std::vector<std::string>());
-
-  return std::make_unique<FunctionAST>(std::move(mainPrototype),
-                                       std::move(mainBody));
+  return std::move(program);
 }
 
 std::unique_ptr<StatementAST> Parser::ParseStatement() {
@@ -143,7 +118,71 @@ std::unique_ptr<StatementAST> Parser::ParseIfStatement() {
       std::move(condition), std::move(thenBranch), std::move(elseBranch));
 }
 
-std::unique_ptr<StatementAST> Parser::ParseFunction() {
+std::unique_ptr<FunctionAST> Parser::ParseFunction() {
+  // Consume the function keywork
+  GetNextToken();
+  if (tokenState != Token::tok_control &&
+      lexer->GetControlCharacter()->str() != "⟅") {
+    std::cerr << "Expected argument list after function declaration";
+    return nullptr;
+  }
+  // consume the open parenthesis
+  GetNextToken();
+
+  std::vector<std::string> argumentNames;
+  bool expectSeparator = false;
+  while (tokenState != Token::tok_operator &&
+         lexer->GetControlCharacter()->str() != "⟆") {
+    switch (tokenState) {
+    case Token::tok_control:
+      if (!expectSeparator) {
+        std::cerr << "Expected Identifier as part of argument list";
+        return nullptr;
+      }
+      if (lexer->GetControlCharacter()->str() != "᨞") {
+        std::cerr << "Expected separator";
+        return nullptr;
+      }
+      // eat the ᨞
+      GetNextToken();
+      expectSeparator = false;
+      break;
+    case Token::tok_identifier:
+      if (expectSeparator) {
+        std::cerr << "Expected separator after identifier";
+        return nullptr;
+      }
+      argumentNames.push_back(lexer->GetIdentifierStr()->str());
+      GetNextToken();
+      expectSeparator = true;
+      break;
+    default:
+      std::cerr << "invalid argument or separator";
+      return nullptr;
+    }
+  }
+
+  if (tokenState != Token::tok_control &&
+      lexer->GetControlCharacter()->str() != "⟆") {
+    std::cerr << "Expected end of argument list";
+    return nullptr;
+  }
+  // consume the close parenthesis
+  GetNextToken();
+
+  if (tokenState != Token::tok_identifier) {
+    std::cerr << "Expected identifer in function declaration";
+    return nullptr;
+  }
+  std::string functionName = lexer->GetIdentifierStr()->str();
+
+  // consume the identifier
+  GetNextToken();
+
+  // Create the prototype
+  std::unique_ptr<PrototypeAST> prototype =
+      std::make_unique<PrototypeAST>(functionName, argumentNames);
+
   if (tokenState != Token::tok_control &&
       lexer->GetControlCharacter()->str() != "꧁") {
     std::cerr << "Expected ꧁ at the beginning of the function\n";
@@ -163,7 +202,7 @@ std::unique_ptr<StatementAST> Parser::ParseFunction() {
 
     body->AddStatement(std::move(statement));
   }
-  return std::move(body);
+  return std::make_unique<FunctionAST>(std::move(prototype), std::move(body));
 }
 
 std::unique_ptr<StatementAST> Parser::ParseStatementBlock() {
@@ -191,9 +230,10 @@ std::unique_ptr<StatementAST> Parser::ParseStatementBlock() {
 
 std::unique_ptr<StatementAST> Parser::ParseIdentifierStatement() {
   std::string identifier = lexer->GetIdentifierStr()->str();
- GetNextToken(); // consume the identifier token
+  GetNextToken(); // consume the identifier token
 
-  if (tokenState == Token::tok_operator && lexer->GetOperatorStr()->str() == "≔") {
+  if (tokenState == Token::tok_operator &&
+      lexer->GetOperatorStr()->str() == "≔") {
     return ParseAssignmentStatement(identifier);
   }
 

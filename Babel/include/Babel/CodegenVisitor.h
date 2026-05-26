@@ -22,6 +22,7 @@ private:
 public:
   CodegenVisitor(llvm::LLVMContext *context,
                           llvm::IRBuilder<> *builder, llvm::Module *module);
+  void VisitProgram(ProgramAST *program) override;
   void VisitStatementBlock(StatementBlockAST *statmentBlock) override;
   void VisitPrototype(PrototypeAST *prototype) override;
   void VisitFunction(FunctionAST *function) override;

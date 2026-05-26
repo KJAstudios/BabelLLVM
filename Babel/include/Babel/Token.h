@@ -14,6 +14,7 @@ enum class Token {
   tok_int,
   tok_double,
   tok_number,
+  tok_function,
   tok_error,
   tok_empty
 };

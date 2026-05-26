@@ -222,6 +222,9 @@ Babel::Token Lexer::GetTokIdentifierOrKeyword(llvm::StringRef identifier) {
   if (identifier.str() == "kaksinkertainen") {
     return Token::tok_double;
   }
+  if(identifier.str() == "funkcjonować"){
+    return Token::tok_function;
+  }
 
   identifierStr = identifier;
   return Token::tok_identifier;
@@ -245,7 +248,7 @@ unsigned int Lexer::GetCharSize(const char pointer) {
 bool Lexer::IsControlCharacter(llvm::StringRef character) {
   return character.str() == "~" || character.str() == "꧁" ||
          character.str() == "꧂" || character.str() == "⟅" ||
-         character.str() == "⟆";
+         character.str() == "⟆"  || character.str() == "᨞";
 }
 
 bool Lexer::IsWhitespaceCharacter(char character) {

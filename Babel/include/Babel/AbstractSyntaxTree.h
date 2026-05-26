@@ -1,5 +1,6 @@
 #ifndef ABSTRACTSYNTAXTREE_H
 #define ABSTRACTSYNTAXTREE_H
+#include "Babel/CodegenVisitor.h"
 #include "Babel/Visitor.h"
 #include <iostream>
 #include <llvm-18/llvm/ADT/StringRef.h>
@@ -8,7 +9,7 @@
 #include <vector>
 namespace Babel
 {
-  class StatementAST
+   class StatementAST
   {
   public:
     StatementAST() = default;
@@ -87,12 +88,34 @@ namespace Babel
       std::cerr << "Created function with name "
                 << this->prototype->GetName()->c_str() << "\n";
     }
-    std::unique_ptr<PrototypeAST> ClaimPrototype()
+    PrototypeAST *GetPrototype()
     {
-      return std::move(prototype);
+      return prototype.get();
     }
     StatementBlockAST *GetBody() { return body.get(); }
     void Visit(class Visitor &visitor) { visitor.VisitFunction(this); }
+  };
+
+  class ProgramAST{
+    private:
+    std::vector<std::unique_ptr<FunctionAST>> programFunctions;
+    // cache the function prototypes as well for easier codegen
+    std::vector<PrototypeAST *> programPrototypes;
+    public:
+    void AddFunction(std::unique_ptr<FunctionAST> function){
+      programFunctions.push_back(function);
+      programPrototypes.push_back(function->GetPrototype());
+    }
+    const std::vector<std::unique_ptr<FunctionAST>> *GetFunctions(){
+      return &programFunctions; 
+    }
+
+    const std::vector<PrototypeAST *> *GetPrototypes(){
+      return &programPrototypes;
+    }
+    void Visit(CodegenVisitor &visitor){
+      visitor.VisitProgram(this);
+    }
   };
 
   class FunctionCallStatementAST : public StatementAST
