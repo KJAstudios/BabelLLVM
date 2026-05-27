@@ -2,7 +2,7 @@
 #include "Babel/AbstractSyntaxTree.h"
 #include "Babel/Token.h"
 #include <iostream>
-#include <llvm-18/llvm/ADT/StringRef.h>
+#include <llvm/ADT/StringRef.h>
 #include <memory>
 #include <string>
 #include <utility>
@@ -40,7 +40,7 @@ std::unique_ptr<ProgramAST> Parser::Parse() {
     case Token::tok_eof:
       return nullptr;
     case Token::tok_function:
-      program->AddFunction(ParseFunction());
+      program->AddFunction(std::move(ParseFunction()));
     default:
       std::cerr << "Only functions are supported at the top level\n";
       return nullptr;

@@ -1,14 +1,13 @@
 #include "Babel/Babel.h"
 
-namespace Babel {
 
-int main(int argCount, char *argValues[]) {
+
+int main(int argCount, char *argv[]) {
   if (argCount > 1) {
     // invalid file mode
     return 1;
   }
 
-  Babel babel = Babel();
+  Babel::Babel babel = Babel::Babel();
   babel.Run();
 };
-} // namespace Babel

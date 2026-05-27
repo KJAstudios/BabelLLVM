@@ -1,16 +1,16 @@
 #include "Babel/CodegenVisitor.h"
 #include "Babel/AbstractSyntaxTree.h"
-#include <llvm-18/llvm/ADT/APFloat.h>
-#include <llvm-18/llvm/ADT/APInt.h>
-#include <llvm-18/llvm/IR/BasicBlock.h>
-#include <llvm-18/llvm/IR/Constants.h>
-#include <llvm-18/llvm/IR/DerivedTypes.h>
-#include <llvm-18/llvm/IR/Function.h>
-#include <llvm-18/llvm/IR/IRBuilder.h>
-#include <llvm-18/llvm/IR/Instructions.h>
-#include <llvm-18/llvm/IR/LLVMContext.h>
-#include <llvm-18/llvm/IR/Module.h>
-#include <llvm-18/llvm/IR/Type.h>
+#include <llvm/ADT/APFloat.h>
+#include <llvm/ADT/APInt.h>
+#include <llvm/IR/BasicBlock.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/Type.h>
 #include <memory>
 #include <vector>
 
@@ -29,8 +29,8 @@ CodegenVisitor::CreateEntryBlockAlloca(llvm::Function *function,
 }
 
 void CodegenVisitor::VisitProgram(ProgramAST *program){
-  for(PrototypeAST *prototype : *program->GetPrototypes()){
-    prototype->Visit(*this);
+  for(const auto &function : *program->GetFunctions()){
+    function->GetPrototype()->Visit(*this);
     if(statementGenerationFailed){
       std::cerr << "Error generating function definitions";
       return;

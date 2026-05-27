@@ -1,8 +1,8 @@
 #ifndef BABEL_LEXER_H
 #define BABEL_LEXER_H
 #include "Token.h"
-#include <llvm-18/llvm/Support/MemoryBuffer.h>
-#include <llvm-18/llvm/ADT/StringRef.h>
+#include <llvm/Support/MemoryBuffer.h>
+#include <llvm/ADT/StringRef.h>
 #include <memory>
 #include <string>
 

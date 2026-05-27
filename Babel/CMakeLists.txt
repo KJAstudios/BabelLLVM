@@ -14,6 +14,24 @@ file(GLOB_RECURSE SRCS "src/*.cpp")
 
 add_executable(babel-llvm ${SRCS})
 
-llvm_map_components_to_libnames(LLVM_LIBS core orcjit native)
-target_link_libraries(babel-llvm ${LLVM_LIBS})
-target_link_options(babel-llvm PRIVATE -rdynamic)
+# Let llvm-config determine exactly what needs to be linked
+execute_process(
+    COMMAND llvm-config-20 --libs all
+    OUTPUT_VARIABLE LLVM_LIBS
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+execute_process(
+    COMMAND llvm-config-20 --system-libs
+    OUTPUT_VARIABLE LLVM_SYSTEM_LIBS
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+execute_process(
+    COMMAND llvm-config-20 --ldflags
+    OUTPUT_VARIABLE LLVM_LD_FLAGS
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+target_link_libraries(babel-llvm ${LLVM_LIBS} ${LLVM_SYSTEM_LIBS})
+target_link_options(babel-llvm PRIVATE ${LLVM_LD_FLAGS} -rdynamic)

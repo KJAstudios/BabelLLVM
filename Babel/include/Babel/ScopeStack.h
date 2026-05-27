@@ -9,7 +9,7 @@
 namespace Babel {
 class ScopeStack {
 private:
-  std::vector<std::map<std::string, llvm::AllocaInst*>> ScopeStack;
+  std::vector<std::map<std::string, llvm::AllocaInst*>> scopes;
 
 public:
 	void PopScope();
