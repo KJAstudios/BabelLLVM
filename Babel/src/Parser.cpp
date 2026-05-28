@@ -41,6 +41,7 @@ std::unique_ptr<ProgramAST> Parser::Parse() {
       return nullptr;
     case Token::tok_function:
       program->AddFunction(std::move(ParseFunction()));
+      break;
     default:
       std::cerr << "Only functions are supported at the top level\n";
       return nullptr;

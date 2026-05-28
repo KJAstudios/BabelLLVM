@@ -13,7 +13,7 @@ private:
   // which can be used by the parent node to generate code for
   // itself
   llvm::Value *lastResult = nullptr;
-  bool statementGenerationFailed;
+  bool statementGenerationFailed = false;
   llvm::LLVMContext *context;
   llvm::IRBuilder<> *builder;
   llvm::Module *module;
