@@ -63,7 +63,8 @@ If/Else statements follow standard C-style conventions with the substituted symb
 ---
 
 ## Example Program
-```funkcjonować ⟅⟆ 主要的꧁
+```
+funkcjonować ⟅⟆ 主要的꧁
   x ≔ 1 ⊕ 1~
   y ≔ 2 ⊖ 1~
   əgər⟅x ≺ y⟆꧁
