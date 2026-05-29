@@ -20,6 +20,9 @@ CodegenVisitor::CodegenVisitor(llvm::LLVMContext *context,
                                llvm::IRBuilder<> *builder, llvm::Module *module)
     : context(context), builder(builder), module(module) {
   scopeStack = std::make_unique<ScopeStack>();
+
+  // map builtin functions
+  builtinFunctionMap["tisk"] = "print";
 }
 
 llvm::AllocaInst *
@@ -105,8 +108,8 @@ void CodegenVisitor::VisitFunction(FunctionAST *function) {
   // create the basic block for the function
   llvm::BasicBlock *block =
       llvm::BasicBlock::Create(*context, "entry", llvmFunction);
-    // make sure the builder is inserting into the function
-    builder->SetInsertPoint(block);
+  // make sure the builder is inserting into the function
+  builder->SetInsertPoint(block);
 
   // add scope for the function variables
   scopeStack->PushScope();
@@ -125,6 +128,8 @@ void CodegenVisitor::VisitFunction(FunctionAST *function) {
   }
 
   // TODO function verification
+  builder->CreateRet(
+      llvm::ConstantInt::get(llvm::Type::getInt64Ty(*context), 0, true));
 
   // remove the function scope
   scopeStack->PopScope();
@@ -132,17 +137,25 @@ void CodegenVisitor::VisitFunction(FunctionAST *function) {
 
 void CodegenVisitor::VisitFunctionCallStatement(
     FunctionCallStatementAST *functionCall) {
-  llvm::Function *function = module->getFunction(*functionCall->GetName());
+
+  std::string functionName = *functionCall->GetName();
+  std::string builtInName;
+  if (TryGetBuiltInFunctionName(&functionName,
+                                llvm::IntegerType::getInt64Ty(*context),
+                                builtInName)) {
+    functionName = builtInName;
+  }
+  llvm::Function *function = FindFunction(&functionName);
   if (function == nullptr) {
-    std::cerr << "Attempting to call function " << functionCall->GetName()
-              << " that does not exist";
+    std::cerr << "Attempting to call function " << functionName
+              << " that does not exist\n";
     statementGenerationFailed = true;
     return;
   }
 
   if (function->arg_size() != functionCall->GetArguments()->size()) {
     std::cerr << "Invalid number of arguments for call to function "
-              << functionCall->GetName();
+              << functionCall->GetName() << '\n';
     statementGenerationFailed = true;
     return;
   }
@@ -257,6 +270,7 @@ void CodegenVisitor::VisitAssignmentStatement(
 
   // finally add the variable to scope
   scopeStack->AddVariable(variableName, alloca);
+  std::cerr << "Variable " << variableName << "Added to scope stack\n";
 }
 
 void CodegenVisitor::VisitIntExpression(IntExpressionAST *intExpression) {
@@ -274,11 +288,12 @@ void CodegenVisitor::VisitVariableExpression(
     VariableExpressionAST *variableExpression) {
   llvm::AllocaInst *alloca =
       scopeStack->GetVariableValue(variableExpression->GetName());
-      if(alloca == nullptr){
-        std::cerr << "Variable " << variableExpression->GetName() << " Does not exist\n";
-        lastResult =nullptr;
-        return;
-      }
+  if (alloca == nullptr) {
+    std::cerr << "Variable " << *variableExpression->GetName()
+              << " Does not exist\n";
+    lastResult = nullptr;
+    return;
+  }
   lastResult = builder->CreateLoad(alloca->getAllocatedType(), alloca,
                                    *variableExpression->GetName());
 }
@@ -331,4 +346,59 @@ void CodegenVisitor::VisitBinaryExpression(
   std::cerr << "Invalid binary operator " << binaryOperator;
   lastResult = nullptr;
 }
+
+bool CodegenVisitor::TryGetBuiltInFunctionName(std::string *babelName,
+                                               llvm::Type *type,
+                                               std::string &outputName) {
+  auto builtinNameData = builtinFunctionMap.find(*babelName);
+  if (builtinNameData == builtinFunctionMap.end()) {
+    return false;
+  }
+
+  std::string functionName = builtinNameData->second;
+
+  if (functionName != "print") {
+    outputName = functionName;
+    return true;
+  }
+
+  if (type == llvm::Type::getInt64Ty(*context)) {
+    outputName = functionName + "_int";
+    return true;
+  }
+
+  return false;
+}
+
+llvm::Function *
+CodegenVisitor::FindOrDeclareBuiltinFunction(std::string *functionName) {
+
+  // if the function has already been created, return it
+  llvm::Function *function = module->getFunction(*functionName);
+  if (function != nullptr) {
+    return function;
+  }
+
+  // else emit it
+  if (*functionName == "print_int") {
+    llvm::FunctionType *printfType = llvm::FunctionType::get(
+        builder->getInt64Ty(), {llvm::IntegerType::getInt64Ty(*context)},
+        false);
+    return llvm::Function::Create(printfType, llvm::Function::ExternalLinkage,
+                                  "print_int", module);
+  }
+
+  return nullptr;
+}
+
+llvm::Function *CodegenVisitor::FindFunction(std::string *name) {
+  // check if the function has been declared
+  llvm::Function *function = module->getFunction(*name);
+  if (function != nullptr) {
+    return function;
+  }
+
+  return FindOrDeclareBuiltinFunction(name);
+}
+
 } // namespace Babel

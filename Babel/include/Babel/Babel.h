@@ -15,10 +15,10 @@ private:
 
 public:
 	Babel();
-	void Run();
+	int Run();
 
 private:
-  void OutputProgram();
+  int OutputProgram();
 };
 } // namespace Babel
 #endif

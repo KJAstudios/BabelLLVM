@@ -6,7 +6,7 @@ void ScopeStack::PopScope() { scopes.pop_back(); }
 void ScopeStack::PushScope() { scopes.emplace_back(); }
 
 void ScopeStack::AddVariable(std::string name, llvm::AllocaInst *value) {
-  auto currentScope = scopes.back();
+  auto &currentScope = scopes.back();
   currentScope[std::move(name)] = value;
 }
 

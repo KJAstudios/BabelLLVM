@@ -2,19 +2,21 @@
 #include "Babel/AbstractSyntaxTree.h"
 #include "Babel/CodegenVisitor.h"
 #include "Babel/Parser.h"
-#include <llvm/Support/CodeGen.h>
-#include <llvm/Support/raw_ostream.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/MC/TargetRegistry.h>
+#include <llvm/Support/CodeGen.h>
 #include <llvm/Support/TargetSelect.h>
+#include <llvm/Support/raw_ostream.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Target/TargetOptions.h>
 #include <llvm/TargetParser/Host.h>
 #include <memory>
 #include <system_error>
+
 
 namespace Babel {
 Babel::Babel() {
@@ -26,12 +28,14 @@ Babel::Babel() {
       context.get(), IRBuilder.get(), module.get());
 };
 
-void Babel::Run() {
+int Babel::Run() {
   std::unique_ptr<ProgramAST> program = parser->Parse();
   program->Visit(*codegenVisitor);
+  module->print(llvm::errs(), nullptr);
+  return OutputProgram();
 }
 
-void Babel::OutputProgram() {
+int Babel::OutputProgram() {
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
   llvm::InitializeAllTargetMCs();
@@ -46,7 +50,7 @@ void Babel::OutputProgram() {
       llvm::TargetRegistry::lookupTarget(targetTriple, error);
   if (target == nullptr) {
     std::cerr << "Failed to find requested build target: " << error << '\n';
-    return;
+    return 1;
   }
 
   // create the target machine
@@ -57,13 +61,29 @@ void Babel::OutputProgram() {
   // set the data layout
   module->setDataLayout(targetMachine->createDataLayout());
 
+  std::string validationError;
+  llvm::raw_string_ostream errorStream(validationError);
+  if(llvm::verifyModule(*module, &errorStream)){
+    llvm::errs() << "Module verification failed:\n" << validationError << "\n";
+    return 1;
+  }
+
   // emit to file
   std::error_code errorCode;
   llvm::raw_fd_ostream destination("output.o", errorCode);
+  if (errorCode) {
+    llvm::errs() << "Could not open File: " << errorCode.message();
+    return 1;
+  }
+
   llvm::legacy::PassManager passManager;
-  targetMachine->addPassesToEmitFile(passManager, destination, nullptr,
-                                     llvm::CodeGenFileType::ObjectFile);
+  if (targetMachine->addPassesToEmitFile(passManager, destination, nullptr,
+                                         llvm::CodeGenFileType::ObjectFile)) {
+    llvm::errs() << "Target Machine cannot emit an object file";
+    return 1;
+  }
   passManager.run(*module);
   destination.flush();
+  return 0;
 }
 } // namespace Babel

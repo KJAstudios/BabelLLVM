@@ -250,6 +250,7 @@ std::unique_ptr<StatementAST> Parser::ParseIdentifierStatement() {
 
 std::unique_ptr<StatementAST>
 Parser::ParseFunctionCall(std::string functionName) {
+  std::cerr << "Function call created with name " << functionName << '\n';
   if (tokenState != Token::tok_control ||
       lexer->GetControlCharacter()->str() != "⟅") {
     std::cerr << "Expected ⟅ after function call\n";
