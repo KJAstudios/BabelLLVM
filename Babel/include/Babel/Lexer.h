@@ -34,6 +34,7 @@ namespace Babel
     llvm::StringRef *GetNumberStr() { return &numberStr; }
 
   private:
+  void ReadFromSTDIN();
     // core functions for the token parsing loop
     void SkipComment();
     Babel::Token LexNumberToken();

@@ -4,7 +4,10 @@
 #include "Babel/Parser.h"
 #include <memory>
 #include <llvm/IR/IRBuilder.h>
+#include "BabelArgs.h"
 namespace Babel {
+
+
 class Babel {
 private:
   std::unique_ptr<llvm::LLVMContext> context;
@@ -15,10 +18,10 @@ private:
 
 public:
 	Babel();
-	int Run();
+	int Run(BabelArgs args);
 
 private:
-  int OutputProgram();
+  int OutputProgram(std::string* fileName);
 };
 } // namespace Babel
 #endif

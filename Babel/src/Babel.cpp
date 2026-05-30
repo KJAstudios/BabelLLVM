@@ -1,5 +1,6 @@
 #include "Babel/Babel.h"
 #include "Babel/AbstractSyntaxTree.h"
+#include "Babel/BabelArgs.h"
 #include "Babel/CodegenVisitor.h"
 #include "Babel/Parser.h"
 #include <llvm/IR/IRBuilder.h>
@@ -17,25 +18,24 @@
 #include <memory>
 #include <system_error>
 
-
 namespace Babel {
 Babel::Babel() {
   context = std::make_unique<llvm::LLVMContext>();
   module = std::make_unique<llvm::Module>("Babel", *context);
   IRBuilder = std::make_unique<llvm::IRBuilder<>>(*context);
-  parser = std::make_unique<Parser>(nullptr);
   codegenVisitor = std::make_unique<CodegenVisitor>(
       context.get(), IRBuilder.get(), module.get());
 };
 
-int Babel::Run() {
+int Babel::Run(BabelArgs args) {
+  parser = std::make_unique<Parser>(args.GetInputFile());
   std::unique_ptr<ProgramAST> program = parser->Parse();
   program->Visit(*codegenVisitor);
   module->print(llvm::errs(), nullptr);
-  return OutputProgram();
+  return OutputProgram(args.GetOutputFile());
 }
 
-int Babel::OutputProgram() {
+int Babel::OutputProgram(std::string *fileName) {
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
   llvm::InitializeAllTargetMCs();
@@ -63,16 +63,17 @@ int Babel::OutputProgram() {
 
   std::string validationError;
   llvm::raw_string_ostream errorStream(validationError);
-  if(llvm::verifyModule(*module, &errorStream)){
+  if (llvm::verifyModule(*module, &errorStream)) {
     llvm::errs() << "Module verification failed:\n" << validationError << "\n";
     return 1;
   }
 
   // emit to file
   std::error_code errorCode;
-  llvm::raw_fd_ostream destination("output.o", errorCode);
+  llvm::raw_fd_ostream destination(*fileName, errorCode);
   if (errorCode) {
-    llvm::errs() << "Could not open File: " << errorCode.message();
+    llvm::errs() << "Could not open File " << *fileName << ": "
+                 << errorCode.message() << "\n";
     return 1;
   }
 
@@ -84,6 +85,7 @@ int Babel::OutputProgram() {
   }
   passManager.run(*module);
   destination.flush();
+  llvm::errs() << "object file written to " << *fileName << '\n';
   return 0;
 }
 } // namespace Babel
