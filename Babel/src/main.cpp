@@ -52,9 +52,15 @@ Babel::BabelArgs ParseArgs(std::vector<std::string> &args) {
 
 void RunLinker(std::string &outputFile) {
   std::string clangPath = llvm::sys::findProgramByName("clang").get();
+  std::string objectFileName = outputFile + ".o";
 
-  std::vector<llvm::StringRef> args = {clangPath, outputFile, "-o",
-                                       "my_program"};
+  if(!std::filesystem::exists("runtime.bc")){
+    std::cerr << "Babel Runtime Library not found";
+    return;
+  }
+
+  std::vector<llvm::StringRef> args = {clangPath, objectFileName, "runtime.bc", "-o",
+                                       outputFile};
 
   std::string errorMessage;
   int result = llvm::sys::ExecuteAndWait(clangPath, args, std::nullopt, {}, 0,

@@ -3,6 +3,7 @@
 #include "Babel/BabelArgs.h"
 #include "Babel/CodegenVisitor.h"
 #include "Babel/Parser.h"
+#include <llvm-20/llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/LegacyPassManager.h>
@@ -32,7 +33,16 @@ int Babel::Run(BabelArgs args) {
   std::unique_ptr<ProgramAST> program = parser->Parse();
   program->Visit(*codegenVisitor);
   module->print(llvm::errs(), nullptr);
+  if(!DoesMainExist()){
+    std::cerr << "主要的 function does not exist";
+    return 1;
+  }
   return OutputProgram(args.GetOutputFile());
+}
+
+bool Babel::DoesMainExist(){
+  llvm::Function *mainFunction = module->getFunction("main");
+  return mainFunction != nullptr;
 }
 
 int Babel::OutputProgram(std::string *fileName) {

@@ -21,6 +21,7 @@ public:
 	int Run(BabelArgs args);
 
 private:
+  bool DoesMainExist();
   int OutputProgram(std::string* fileName);
 };
 } // namespace Babel
