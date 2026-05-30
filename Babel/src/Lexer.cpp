@@ -12,7 +12,7 @@
 #include <system_error>
 namespace Babel {
 void Lexer::LoadBuffer(std::string *filename) {
-  if (filename != nullptr) {
+  if (filename != nullptr && !filename->empty()) {
     auto memoryBuffer = llvm::MemoryBuffer::getFile(*filename);
     if (!memoryBuffer) {
       std::cerr << memoryBuffer.getError();
@@ -22,7 +22,10 @@ void Lexer::LoadBuffer(std::string *filename) {
     stringCodeBuffer = rawMemoryBuffer->getBuffer();
     return;
   }
+  std::cerr << "Source file " << *filename << " not found\n";
+}
 
+void Lexer::ReadFromSTDIN() {
   auto memoryBuffer = llvm::MemoryBuffer::getSTDIN();
   if (!memoryBuffer) {
     std::cerr << memoryBuffer.getError();
@@ -222,7 +225,7 @@ Babel::Token Lexer::GetTokIdentifierOrKeyword(llvm::StringRef identifier) {
   if (identifier.str() == "kaksinkertainen") {
     return Token::tok_double;
   }
-  if(identifier.str() == "funkcjonować"){
+  if (identifier.str() == "funkcjonować") {
     return Token::tok_function;
   }
 
@@ -248,7 +251,7 @@ unsigned int Lexer::GetCharSize(const char pointer) {
 bool Lexer::IsControlCharacter(llvm::StringRef character) {
   return character.str() == "~" || character.str() == "꧁" ||
          character.str() == "꧂" || character.str() == "⟅" ||
-         character.str() == "⟆"  || character.str() == "᨞";
+         character.str() == "⟆" || character.str() == "᨞";
 }
 
 bool Lexer::IsWhitespaceCharacter(char character) {

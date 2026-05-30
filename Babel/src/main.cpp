@@ -1,13 +1,63 @@
 #include "Babel/Babel.h"
+#include "Babel/BabelArgs.h"
+#include <filesystem>
 
+namespace {
 
+bool IsValidBabelFileName(const std::string &fileName) {
+  return std::filesystem::path(fileName).extension() == ".bbl";
+};
+
+Babel::BabelArgs ParseArgs(std::vector<std::string> &args) {
+  Babel::BabelArgs babelArgs = Babel::BabelArgs();
+  if (args.size() == 1 || args.size() > 4) {
+    std::cerr << "Invalid number of arguments";
+    return babelArgs;
+  }
+
+  // skip arg[0], since that's the program name
+  for (int i = 1; i < args.size(); i++) {
+    std::string &curArg = args[i];
+    // only check for input file in the first argument
+    if (i == 1) {
+      
+      if (IsValidBabelFileName(curArg)) {
+        babelArgs.SetInputFile(curArg);
+        continue;
+      }
+
+      std::cerr << curArg << " is an invalid Babel file. Must end in .bbl\n";
+      babelArgs.SetError();
+      return babelArgs;
+    }
+
+    // currently the only option the output file
+    if (curArg == "-o") {
+      if (i == args.size() - 1) {
+        std::cerr << "No output file given";
+        babelArgs.SetError();
+        return babelArgs;
+      }
+      // the next argument is the output file
+      i++;
+      babelArgs.SetOutputFile(args[i]);
+      // this is the only current option, so we can stop looking at arguments
+      break;
+    }
+  }
+
+  babelArgs.Validate();
+  return babelArgs;
+}
+} // namespace
 
 int main(int argCount, char *argv[]) {
-  if (argCount > 1) {
-    // invalid file mode
+  std::vector<std::string> args(argv, argv + argCount);
+  Babel::BabelArgs argData = ParseArgs(args);
+  if (argData.HasError()) {
     return 1;
   }
 
   Babel::Babel babel = Babel::Babel();
-  babel.Run();
+  babel.Run(argData);
 };
