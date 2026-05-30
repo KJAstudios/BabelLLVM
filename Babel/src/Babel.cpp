@@ -1,6 +1,6 @@
 #include "Babel/Babel.h"
-#include "Babel/BabelArgs.h"
 #include "Babel/AbstractSyntaxTree.h"
+#include "Babel/BabelArgs.h"
 #include "Babel/CodegenVisitor.h"
 #include "Babel/Parser.h"
 #include <llvm/IR/IRBuilder.h>
@@ -17,7 +17,6 @@
 #include <llvm/TargetParser/Host.h>
 #include <memory>
 #include <system_error>
-
 
 namespace Babel {
 Babel::Babel() {
@@ -64,7 +63,7 @@ int Babel::OutputProgram(std::string *fileName) {
 
   std::string validationError;
   llvm::raw_string_ostream errorStream(validationError);
-  if(llvm::verifyModule(*module, &errorStream)){
+  if (llvm::verifyModule(*module, &errorStream)) {
     llvm::errs() << "Module verification failed:\n" << validationError << "\n";
     return 1;
   }
@@ -73,7 +72,8 @@ int Babel::OutputProgram(std::string *fileName) {
   std::error_code errorCode;
   llvm::raw_fd_ostream destination(*fileName, errorCode);
   if (errorCode) {
-    llvm::errs() << "Could not open File " << *fileName << ": " << errorCode.message() << "\n";
+    llvm::errs() << "Could not open File " << *fileName << ": "
+                 << errorCode.message() << "\n";
     return 1;
   }
 

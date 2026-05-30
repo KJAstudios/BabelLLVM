@@ -1,12 +1,18 @@
 #include "Babel/Lexer.h"
 #include "Babel/Token.h"
 
-#include <cctype>
-#include <cstdint>
-#include <cstdio>
-#include <iostream>
 #include <llvm/ADT/StringRef.h>
+
 #include <llvm/Support/MemoryBuffer.h>
+
+#include <cctype>
+
+#include <cstdint>
+
+#include <cstdio>
+
+#include <iostream>
+
 #include <memory>
 #include <string>
 #include <system_error>
