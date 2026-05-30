@@ -69,10 +69,11 @@ int Babel::OutputProgram(std::string *fileName) {
   }
 
   // emit to file
+  std::string outputFile = *fileName + ".o";
   std::error_code errorCode;
-  llvm::raw_fd_ostream destination(*fileName, errorCode);
+  llvm::raw_fd_ostream destination(outputFile, errorCode);
   if (errorCode) {
-    llvm::errs() << "Could not open File " << *fileName << ": "
+    llvm::errs() << "Could not create or open output object file " << outputFile << ": "
                  << errorCode.message() << "\n";
     return 1;
   }
@@ -85,7 +86,7 @@ int Babel::OutputProgram(std::string *fileName) {
   }
   passManager.run(*module);
   destination.flush();
-  llvm::errs() << "object file written to " << *fileName << '\n';
+  llvm::errs() << "object file written to " << outputFile << '\n';
   return 0;
 }
 } // namespace Babel

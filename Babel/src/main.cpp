@@ -1,9 +1,9 @@
 #include "Babel/Babel.h"
 #include "Babel/BabelArgs.h"
 #include <filesystem>
+#include <llvm/Support/Program.h>
 
 namespace {
-
 bool IsValidBabelFileName(const std::string &fileName) {
   return std::filesystem::path(fileName).extension() == ".bbl";
 };
@@ -20,7 +20,7 @@ Babel::BabelArgs ParseArgs(std::vector<std::string> &args) {
     std::string &curArg = args[i];
     // only check for input file in the first argument
     if (i == 1) {
-      
+
       if (IsValidBabelFileName(curArg)) {
         babelArgs.SetInputFile(curArg);
         continue;
@@ -49,6 +49,17 @@ Babel::BabelArgs ParseArgs(std::vector<std::string> &args) {
   babelArgs.Validate();
   return babelArgs;
 }
+
+void RunLinker(std::string &outputFile) {
+  std::string clangPath = llvm::sys::findProgramByName("clang").get();
+
+  std::vector<llvm::StringRef> args = {clangPath, outputFile, "-o",
+                                       "my_program"};
+
+  std::string errorMessage;
+  int result = llvm::sys::ExecuteAndWait(clangPath, args, std::nullopt, {}, 0,
+                                         0, &errorMessage);
+}
 } // namespace
 
 int main(int argCount, char *argv[]) {
@@ -60,4 +71,5 @@ int main(int argCount, char *argv[]) {
 
   Babel::Babel babel = Babel::Babel();
   babel.Run(argData);
+  RunLinker(*argData.GetOutputFile());
 };
