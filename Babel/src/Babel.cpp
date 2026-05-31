@@ -3,6 +3,7 @@
 #include "Babel/BabelArgs.h"
 #include "Babel/CodegenVisitor.h"
 #include "Babel/Parser.h"
+#include <llvm-20/llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/LegacyPassManager.h>
@@ -27,15 +28,25 @@ Babel::Babel() {
       context.get(), IRBuilder.get(), module.get());
 };
 
-int Babel::Run(BabelArgs args) {
+int Babel::Run(BabelArgs &args) {
   parser = std::make_unique<Parser>(args.GetInputFile());
   std::unique_ptr<ProgramAST> program = parser->Parse();
   program->Visit(*codegenVisitor);
   module->print(llvm::errs(), nullptr);
-  return OutputProgram(args.GetOutputFile());
+  if(!DoesMainExist()){
+    std::cerr << "主要的 function does not exist";
+    return 1;
+  }
+
+  return 0;
 }
 
-int Babel::OutputProgram(std::string *fileName) {
+bool Babel::DoesMainExist(){
+  llvm::Function *mainFunction = module->getFunction("main");
+  return mainFunction != nullptr;
+}
+
+int Babel::OutputObjectFile(std::string *fileName) {
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
   llvm::InitializeAllTargetMCs();
@@ -69,10 +80,11 @@ int Babel::OutputProgram(std::string *fileName) {
   }
 
   // emit to file
+  std::string outputFile = *fileName;
   std::error_code errorCode;
-  llvm::raw_fd_ostream destination(*fileName, errorCode);
+  llvm::raw_fd_ostream destination(outputFile, errorCode);
   if (errorCode) {
-    llvm::errs() << "Could not open File " << *fileName << ": "
+    llvm::errs() << "Could not create or open output object file " << outputFile << ": "
                  << errorCode.message() << "\n";
     return 1;
   }
@@ -85,7 +97,7 @@ int Babel::OutputProgram(std::string *fileName) {
   }
   passManager.run(*module);
   destination.flush();
-  llvm::errs() << "object file written to " << *fileName << '\n';
+  llvm::errs() << "object file written to " << outputFile << '\n';
   return 0;
 }
 } // namespace Babel

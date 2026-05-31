@@ -176,6 +176,10 @@ std::unique_ptr<FunctionAST> Parser::ParseFunction() {
     return nullptr;
   }
   std::string functionName = lexer->GetIdentifierStr()->str();
+  // map 主要的 to main so that the linker knows the entry point
+  if (functionName == "主要的") {
+    functionName = "main";
+  }
 
   // consume the identifier
   GetNextToken();

@@ -62,9 +62,11 @@ void CodegenVisitor::VisitPrototype(PrototypeAST *prototype) {
   // make a list of the function paramaters with type
   const std::vector<llvm::Type *> argumentTypeList(
       prototype->GetArgs()->size(), llvm::Type::getInt64Ty(*context));
+
   // build a function type with the given arguments and the return type
   llvm::FunctionType *functionType = llvm::FunctionType::get(
       llvm::Type::getInt64Ty(*context), argumentTypeList, false);
+
   // finally create the function itself
   llvm::Function *function =
       llvm::Function::Create(functionType, llvm::Function::ExternalLinkage,

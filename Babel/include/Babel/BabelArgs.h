@@ -7,6 +7,7 @@ struct BabelArgs {
 private:
   std::string inputFile;
   std::string outputFile;
+  bool objectFileOnly = false;
   bool argError = false;
 
 public:
@@ -17,6 +18,9 @@ public:
   void SetOutputFile(std::string fileName) { outputFile = fileName; }
 
   std::string *GetOutputFile() { return &outputFile; }
+
+  void SetObjectFileOnly() { objectFileOnly = true; }
+  bool GetObjectFileOnlyStatus() { return objectFileOnly; }
 
   void SetError() { argError = true; }
 
