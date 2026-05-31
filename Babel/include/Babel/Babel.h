@@ -18,11 +18,12 @@ private:
 
 public:
 	Babel();
-	int Run(BabelArgs args);
+	int Run(BabelArgs &args);
+  int OutputObjectFile(std::string* fileName);
 
 private:
   bool DoesMainExist();
-  int OutputProgram(std::string* fileName);
+  
 };
 } // namespace Babel
 #endif

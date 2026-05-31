@@ -28,7 +28,7 @@ Babel::Babel() {
       context.get(), IRBuilder.get(), module.get());
 };
 
-int Babel::Run(BabelArgs args) {
+int Babel::Run(BabelArgs &args) {
   parser = std::make_unique<Parser>(args.GetInputFile());
   std::unique_ptr<ProgramAST> program = parser->Parse();
   program->Visit(*codegenVisitor);
@@ -37,7 +37,8 @@ int Babel::Run(BabelArgs args) {
     std::cerr << "主要的 function does not exist";
     return 1;
   }
-  return OutputProgram(args.GetOutputFile());
+
+  return 0;
 }
 
 bool Babel::DoesMainExist(){
@@ -45,7 +46,7 @@ bool Babel::DoesMainExist(){
   return mainFunction != nullptr;
 }
 
-int Babel::OutputProgram(std::string *fileName) {
+int Babel::OutputObjectFile(std::string *fileName) {
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
   llvm::InitializeAllTargetMCs();
@@ -79,7 +80,7 @@ int Babel::OutputProgram(std::string *fileName) {
   }
 
   // emit to file
-  std::string outputFile = *fileName + ".o";
+  std::string outputFile = *fileName;
   std::error_code errorCode;
   llvm::raw_fd_ostream destination(outputFile, errorCode);
   if (errorCode) {
