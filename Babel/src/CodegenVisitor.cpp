@@ -1,5 +1,6 @@
 #include "Babel/CodegenVisitor.h"
 #include "Babel/AbstractSyntaxTree.h"
+#include "Babel/DebugInfo.h"
 #include "Babel/ScopeStack.h"
 #include <llvm/ADT/APFloat.h>
 #include <llvm/ADT/APInt.h>
@@ -23,6 +24,10 @@ CodegenVisitor::CodegenVisitor(llvm::LLVMContext *context,
 
   // map builtin functions
   builtinFunctionMap["tisk"] = "print";
+}
+
+void CodegenVisitor::AttachDebugInfo(DebugInfo *debugInfoPtr) {
+  debugInfo = debugInfoPtr;
 }
 
 llvm::AllocaInst *
@@ -112,6 +117,8 @@ void CodegenVisitor::VisitFunction(FunctionAST *function) {
       llvm::BasicBlock::Create(*context, "entry", llvmFunction);
   // make sure the builder is inserting into the function
   builder->SetInsertPoint(block);
+
+  debugInfo->CreateFunction(*prototype->GetName(), llvmFunction);
 
   // add scope for the function variables
   scopeStack->PushScope();

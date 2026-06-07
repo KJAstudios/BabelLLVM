@@ -1,5 +1,6 @@
 #ifndef CODGEN_VISITOR_H
 #define CODGEN_VISITOR_H
+#include "Babel/DebugInfo.h"
 #include "Babel/ScopeStack.h"
 #include "Babel/Visitor.h"
 #include <llvm-20/llvm/IR/Type.h>
@@ -22,10 +23,12 @@ private:
   std::unique_ptr<ScopeStack> scopeStack;
   // <Babel identifier, extern identifier>
   std::map<std::string, std::string> builtinFunctionMap;
+  DebugInfo *debugInfo;
 
 public:
   CodegenVisitor(llvm::LLVMContext *context, llvm::IRBuilder<> *builder,
                  llvm::Module *module);
+  void AttachDebugInfo(DebugInfo *debugInfo);
   void VisitProgram(ProgramAST *program) override;
   void VisitStatementBlock(StatementBlockAST *statmentBlock) override;
   void VisitPrototype(PrototypeAST *prototype) override;
@@ -42,10 +45,10 @@ public:
   void VisitBinaryExpression(BinaryExpressionAST *binaryExpression) override;
 
 private:
-  
-  llvm::Function* FindOrDeclareBuiltinFunction(std::string *functionName);
+  llvm::Function *FindOrDeclareBuiltinFunction(std::string *functionName);
   llvm::Function *FindFunction(std::string *functionName);
- bool TryGetBuiltInFunctionName(std::string *babelName, llvm::Type *type, std::string &outputName);
+  bool TryGetBuiltInFunctionName(std::string *babelName, llvm::Type *type,
+                                 std::string &outputName);
   llvm::AllocaInst *CreateEntryBlockAlloca(llvm::Function *function,
                                            std::string variableName);
 };

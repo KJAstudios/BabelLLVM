@@ -32,6 +32,7 @@ Babel::Babel() {
 int Babel::Run(BabelArgs &args) {
   std::string fileName = *args.GetInputFile();
   debugInfo = std::make_unique<DebugInfo>(fileName);
+  codegenVisitor->AttachDebugInfo(debugInfo.get());
   parser = std::make_unique<Parser>(args.GetInputFile());
   std::unique_ptr<ProgramAST> program = parser->Parse();
   program->Visit(*codegenVisitor);
