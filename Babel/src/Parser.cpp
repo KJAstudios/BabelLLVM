@@ -7,7 +7,8 @@
 #include <string>
 #include <utility>
 namespace Babel {
-Babel::Parser::Parser(std::string *filename) : tokenState(Token::tok_empty) {
+Babel::Parser::Parser(std::string *filename)
+    : token(llvm::StringRef(), Token::tok_empty) {
   lexer = std::make_unique<Lexer>();
   InitOperatorPrecedence();
   lexer->LoadBuffer(filename);
@@ -26,17 +27,17 @@ void Parser::InitOperatorPrecedence() {
 // don't return the token type so we rely on the tokenState member variable to
 // determine the current token. This is to avoid ambiguity due to the recursive
 // nature of the parsing functions, where each function can consume the token.
-void Parser::GetNextToken() { tokenState = lexer->GetNextToken(); }
+void Parser::GetNextToken() { token = lexer->GetNextToken(); }
 
 std::unique_ptr<ProgramAST> Parser::Parse() {
   GetNextToken();
-  if (tokenState == Token::tok_eof) {
+  if (token.GetTokenType() == Token::tok_eof) {
     std::cerr << "No functions found";
     return nullptr;
   }
   std::unique_ptr<ProgramAST> program = std::make_unique<ProgramAST>();
-  while (tokenState != Token::tok_eof) {
-    switch (tokenState) {
+  while (token.GetTokenType() != Token::tok_eof) {
+    switch (token.GetTokenType()) {
     case Token::tok_eof:
       return nullptr;
     case Token::tok_function:
@@ -52,7 +53,7 @@ std::unique_ptr<ProgramAST> Parser::Parse() {
 }
 
 std::unique_ptr<StatementAST> Parser::ParseStatement() {
-  switch (tokenState) {
+  switch (token.GetTokenType()) {
   case Token::tok_if:
     return ParseIfStatement();
   case Token::tok_identifier:
@@ -65,29 +66,30 @@ std::unique_ptr<StatementAST> Parser::ParseStatement() {
 std::unique_ptr<StatementAST> Parser::ParseIfStatement() {
   GetNextToken(); // consume the if token
 
-  if (tokenState != Token::tok_control ||
-      lexer->GetControlCharacter()->str() != "⟅") {
+  if (token.GetTokenType() != Token::tok_control ||
+      token.GetTokenString() != "⟅") {
     std::cerr << "Expected ⟅ after if statement\n";
     return nullptr;
   }
 
   GetNextToken();
-  if (tokenState != Token::tok_number && tokenState != Token::tok_identifier) {
+  if (token.GetTokenType() != Token::tok_number &&
+      token.GetTokenType() != Token::tok_identifier) {
     std::cerr << "Expected condition after if statement\n";
     return nullptr;
   }
   // parse condition expression
   std::unique_ptr<ExpressionAST> condition = ParseExpression();
 
-  if (tokenState != Token::tok_control ||
-      lexer->GetControlCharacter()->str() != "⟆") {
+  if (token.GetTokenType() != Token::tok_control ||
+      token.GetTokenString() != "⟆") {
     std::cerr << "Expected ⟆ after if statement condition\n";
     return nullptr;
   }
 
   GetNextToken(); // consume the ⟆
-  if (tokenState != Token::tok_control ||
-      lexer->GetControlCharacter()->str() != "꧁") {
+  if (token.GetTokenType() != Token::tok_control ||
+      token.GetTokenString() != "꧁") {
     std::cerr << "Expected ꧁ before if statement then branch\n";
     return nullptr;
   }
@@ -99,10 +101,10 @@ std::unique_ptr<StatementAST> Parser::ParseIfStatement() {
   }
 
   std::unique_ptr<StatementAST> elseBranch = nullptr;
-  if (tokenState == Token::tok_else) {
+  if (token.GetTokenType() == Token::tok_else) {
     GetNextToken();
-    if (tokenState != Token::tok_control ||
-        lexer->GetControlCharacter()->str() != "꧁") {
+    if (token.GetTokenType() != Token::tok_control ||
+        token.GetTokenString() != "꧁") {
       std::cerr << "Expected ꧁ before if statement else branch\n";
       return nullptr;
     }
@@ -122,8 +124,8 @@ std::unique_ptr<StatementAST> Parser::ParseIfStatement() {
 std::unique_ptr<FunctionAST> Parser::ParseFunction() {
   // Consume the function keywork
   GetNextToken();
-  if (tokenState != Token::tok_control &&
-      lexer->GetControlCharacter()->str() != "⟅") {
+  if (token.GetTokenType() != Token::tok_control &&
+      token.GetTokenString() != "⟅") {
     std::cerr << "Expected argument list after function declaration";
     return nullptr;
   }
@@ -132,15 +134,15 @@ std::unique_ptr<FunctionAST> Parser::ParseFunction() {
 
   std::vector<std::string> argumentNames;
   bool expectSeparator = false;
-  while (tokenState != Token::tok_operator &&
-         lexer->GetControlCharacter()->str() != "⟆") {
-    switch (tokenState) {
+  while (token.GetTokenType() != Token::tok_operator &&
+         token.GetTokenString() != "⟆") {
+    switch (token.GetTokenType()) {
     case Token::tok_control:
       if (!expectSeparator) {
         std::cerr << "Expected Identifier as part of argument list";
         return nullptr;
       }
-      if (lexer->GetControlCharacter()->str() != "᨞") {
+      if (token.GetTokenString() != "᨞") {
         std::cerr << "Expected separator";
         return nullptr;
       }
@@ -153,7 +155,7 @@ std::unique_ptr<FunctionAST> Parser::ParseFunction() {
         std::cerr << "Expected separator after identifier";
         return nullptr;
       }
-      argumentNames.push_back(lexer->GetIdentifierStr()->str());
+      argumentNames.push_back(token.GetTokenString());
       GetNextToken();
       expectSeparator = true;
       break;
@@ -163,19 +165,19 @@ std::unique_ptr<FunctionAST> Parser::ParseFunction() {
     }
   }
 
-  if (tokenState != Token::tok_control &&
-      lexer->GetControlCharacter()->str() != "⟆") {
+  if (token.GetTokenType() != Token::tok_control &&
+      token.GetTokenString() != "⟆") {
     std::cerr << "Expected end of argument list";
     return nullptr;
   }
   // consume the close parenthesis
   GetNextToken();
 
-  if (tokenState != Token::tok_identifier) {
+  if (token.GetTokenType() != Token::tok_identifier) {
     std::cerr << "Expected identifer in function declaration";
     return nullptr;
   }
-  std::string functionName = lexer->GetIdentifierStr()->str();
+  std::string functionName = token.GetTokenString();
   // map 主要的 to main so that the linker knows the entry point
   if (functionName == "主要的") {
     functionName = "main";
@@ -188,8 +190,8 @@ std::unique_ptr<FunctionAST> Parser::ParseFunction() {
   std::unique_ptr<PrototypeAST> prototype =
       std::make_unique<PrototypeAST>(functionName, argumentNames);
 
-  if (tokenState != Token::tok_control &&
-      lexer->GetControlCharacter()->str() != "꧁") {
+  if (token.GetTokenType() != Token::tok_control &&
+      token.GetTokenString() != "꧁") {
     std::cerr << "Expected ꧁ at the beginning of the function\n";
     return nullptr;
   }
@@ -211,8 +213,8 @@ std::unique_ptr<FunctionAST> Parser::ParseFunction() {
 }
 
 std::unique_ptr<StatementAST> Parser::ParseStatementBlock() {
-  if (tokenState != Token::tok_control &&
-      lexer->GetControlCharacter()->str() != "꧁") {
+  if (token.GetTokenType() != Token::tok_control &&
+      token.GetTokenString() != "꧁") {
     std::cerr << "Expected ꧁ at the beginning of the statement block\n";
     return nullptr;
   }
@@ -234,16 +236,16 @@ std::unique_ptr<StatementAST> Parser::ParseStatementBlock() {
 }
 
 std::unique_ptr<StatementAST> Parser::ParseIdentifierStatement() {
-  std::string identifier = lexer->GetIdentifierStr()->str();
+  std::string identifier = token.GetTokenString();
   GetNextToken(); // consume the identifier token
 
-  if (tokenState == Token::tok_operator &&
-      lexer->GetOperatorStr()->str() == "≔") {
+  if (token.GetTokenType() == Token::tok_operator &&
+      token.GetTokenString() == "≔") {
     return ParseAssignmentStatement(identifier);
   }
 
-  if (tokenState == Token::tok_control &&
-      lexer->GetControlCharacter()->str() == "⟅") {
+  if (token.GetTokenType() == Token::tok_control &&
+      token.GetTokenString() == "⟅") {
     return ParseFunctionCall(identifier);
   }
 
@@ -255,8 +257,8 @@ std::unique_ptr<StatementAST> Parser::ParseIdentifierStatement() {
 std::unique_ptr<StatementAST>
 Parser::ParseFunctionCall(std::string functionName) {
   std::cerr << "Function call created with name " << functionName << '\n';
-  if (tokenState != Token::tok_control ||
-      lexer->GetControlCharacter()->str() != "⟅") {
+  if (token.GetTokenType() != Token::tok_control ||
+      token.GetTokenString() != "⟅") {
     std::cerr << "Expected ⟅ after function call\n";
     return nullptr;
   }
@@ -264,8 +266,8 @@ Parser::ParseFunctionCall(std::string functionName) {
   GetNextToken(); // consume the ⟅ token
 
   std::vector<std::unique_ptr<ExpressionAST>> arguments;
-  while (tokenState != Token::tok_control ||
-         lexer->GetControlCharacter()->str() != "⟆") {
+  while (token.GetTokenType() != Token::tok_control ||
+         token.GetTokenString() != "⟆") {
     std::unique_ptr<ExpressionAST> argument = ParseExpression();
 
     if (argument == nullptr) {
@@ -278,8 +280,8 @@ Parser::ParseFunctionCall(std::string functionName) {
 
   GetNextToken(); // consume the ⟆ token
 
-  if (tokenState != Token::tok_control ||
-      lexer->GetControlCharacter()->str() != "~") {
+  if (token.GetTokenType() != Token::tok_control ||
+      token.GetTokenString() != "~") {
     std::cerr << "Expected ~ at the end of the function call statement. "
                  "Multiple arguments are not supported yet.\n";
     return nullptr;
@@ -292,14 +294,15 @@ Parser::ParseFunctionCall(std::string functionName) {
 
 std::unique_ptr<StatementAST>
 Parser::ParseAssignmentStatement(std::string identifier) {
-  if (tokenState != Token::tok_operator ||
-      lexer->GetOperatorStr()->str() != "≔") {
+  if (token.GetTokenType() != Token::tok_operator ||
+      token.GetTokenString() != "≔") {
     std::cerr << "Expected ≔ after identifier in assignment statement\n";
     return nullptr;
   }
 
   GetNextToken(); // consume the ≔ token
-  if (tokenState != Token::tok_number && tokenState != Token::tok_identifier) {
+  if (token.GetTokenType() != Token::tok_number &&
+      token.GetTokenType() != Token::tok_identifier) {
     std::cerr << "Expected expression after ≔ in assignment statement\n";
     return nullptr;
   }
@@ -333,12 +336,12 @@ Parser::ParseBinaryOpRHS(int precedence,
     // if the next token is not an operator, we're done parsing the
     // binary expression
     // this might cause an issue if it's a control character
-    if (tokenState != Token::tok_operator) {
+    if (token.GetTokenType() != Token::tok_operator) {
       return leftHandSide;
     }
 
     // get the precedence of the current operator token
-    std::string operatorStr = lexer->GetOperatorStr()->str();
+    std::string operatorStr = token.GetTokenString();
     auto operatorPrecedenceIt = operatorPrecedence.find(operatorStr);
     GetNextToken(); // consume the operator token
 
@@ -361,7 +364,7 @@ Parser::ParseBinaryOpRHS(int precedence,
     }
 
     // if the next token isn't an operator, the expression is finished
-    if (tokenState != Token::tok_operator) {
+    if (token.GetTokenType() != Token::tok_operator) {
       return std::make_unique<BinaryExpressionAST>(
           operatorStr, std::move(leftHandSide), std::move(RightHandSide));
     }
@@ -369,7 +372,7 @@ Parser::ParseBinaryOpRHS(int precedence,
     // If the next token after parsing the current operator is another operator,
     // we need to check it's precedence to determine if we keep parsing through
     // the tree
-    std::string nextOperatorStr = lexer->GetOperatorStr()->str();
+    std::string nextOperatorStr = token.GetTokenString();
     auto nextOperatorPrecedenceIt = operatorPrecedence.find(nextOperatorStr);
     int nextTokenPrecedence = -1;
 
@@ -397,7 +400,7 @@ Parser::ParseBinaryOpRHS(int precedence,
 }
 
 std::unique_ptr<ExpressionAST> Parser::ParsePrimary() {
-  switch (tokenState) {
+  switch (token.GetTokenType()) {
   case Token::tok_identifier:
     return ParseIdentifierExpression();
   case Token::tok_number:
@@ -408,13 +411,13 @@ std::unique_ptr<ExpressionAST> Parser::ParsePrimary() {
 }
 
 std::unique_ptr<ExpressionAST> Parser::ParseIdentifierExpression() {
-  llvm::StringRef *identifier = lexer->GetIdentifierStr();
+  std::string identifier = token.GetTokenString();
   GetNextToken(); // consume the identifier token
-  return std::make_unique<VariableExpressionAST>(identifier->str());
+  return std::make_unique<VariableExpressionAST>(identifier);
 }
 
 std::unique_ptr<ExpressionAST> Parser::ParseNumberExpression() {
-  std::string numberStr = lexer->GetNumberStr()->str();
+  std::string numberStr = token.GetTokenString();
   GetNextToken(); // consume the number token
   if (numberStr.find('.') != std::string::npos) {
     std::cerr << "Floating point numbers not supported yet\n";
@@ -427,8 +430,8 @@ std::unique_ptr<ExpressionAST> Parser::ParseNumberExpression() {
 // all statements will end with  ~.
 // closing parenthesis (⟆) may need to be added in the future
 bool Parser::CheckEndOfStatement() {
-  if (tokenState != Token::tok_control ||
-      lexer->GetControlCharacter()->str() != "~") {
+  if (token.GetTokenType() != Token::tok_control ||
+      token.GetTokenString() != "~") {
     std::cerr << "Expected ~ at the end of the statement\n";
     return false;
   }
@@ -441,8 +444,8 @@ bool Parser::CheckEndOfStatement() {
 // all statements will end with  ꧂.
 // closing parenthesis (⟆) may need to be added in the future
 bool Parser::CheckEndOfFunction() {
-  if (tokenState != Token::tok_control ||
-      lexer->GetControlCharacter()->str() != "꧂") {
+  if (token.GetTokenType() != Token::tok_control ||
+      token.GetTokenString() != "꧂") {
     return false;
   }
 

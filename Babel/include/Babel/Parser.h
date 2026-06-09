@@ -2,7 +2,6 @@
 #define PARSER_H
 #include "Babel/AbstractSyntaxTree.h"
 #include "Babel/Lexer.h"
-#include "Babel/Token.h"
 #include <map>
 #include <memory>
 #include <string>
@@ -10,7 +9,7 @@ namespace Babel {
 class Parser {
 private:
   std::unique_ptr<Lexer> lexer;
-  Token tokenState;
+  TokenData token;
   std::map<std::string, int> operatorPrecedence;
 
 public:
