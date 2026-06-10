@@ -25,7 +25,7 @@ private:
   std::vector<llvm::DIScope *> lexicalBlocks;
 
 public:
-  explicit DebugInfo(std::string &fileName);
+  explicit DebugInfo(std::string &fileName, llvm::Module &module);
   void CreateFunction(std::string &functionName, llvm::Function *function);
   void DeclareArgument(llvm::Argument &argument, llvm::AllocaInst *alloca,
                        unsigned argumentIndex, int lineNumber,

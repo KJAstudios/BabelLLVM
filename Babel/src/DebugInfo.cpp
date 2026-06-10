@@ -8,13 +8,15 @@
 #include <llvm-20/llvm/IR/DebugLoc.h>
 #include <llvm-20/llvm/IR/IRBuilder.h>
 #include <llvm/IR/IRBuilder.h>
+#include <memory>
 
 namespace Babel {
 
-DebugInfo::DebugInfo(std::string &fileName)
-    : fileName(std::move(fileName)),
+DebugInfo::DebugInfo(std::string &inputFileName, llvm::Module &module)
+    : dwarfBuilder(std::make_unique<llvm::DIBuilder>(module)),
+      fileName(inputFileName),
       compileUnit(dwarfBuilder->createCompileUnit(
-          BabelLanguageCode, dwarfBuilder->createFile(fileName, "."),
+          BabelLanguageCode, dwarfBuilder->createFile(inputFileName, "."),
           "Babel Compiler", false, "", 0)),
       Unit(dwarfBuilder->createFile(compileUnit->getFilename(),
                                     compileUnit->getDirectory())) {}
