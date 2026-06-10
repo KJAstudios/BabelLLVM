@@ -4,7 +4,7 @@
 #include "Babel/CodegenVisitor.h"
 #include "Babel/DebugInfo.h"
 #include "Babel/Parser.h"
-#include <llvm-20/llvm/IR/Function.h>
+#include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/LegacyPassManager.h>
@@ -38,7 +38,8 @@ int Babel::Run(BabelArgs &args) {
   program->Visit(*codegenVisitor);
   // finalize the debug info once the IR is generated
   debugInfo->GetDwarfBuilder()->finalize();
-  module->print(llvm::errs(), nullptr);
+  // uncomment to dump IR into console
+  // module->print(llvm::errs(), nullptr);
   if (!DoesMainExist()) {
     std::cerr << "主要的 function does not exist";
     return 1;
@@ -103,7 +104,6 @@ int Babel::OutputObjectFile(std::string *fileName) {
   }
   passManager.run(*module);
   destination.flush();
-  llvm::errs() << "object file written to " << outputFile << '\n';
   return 0;
 }
 } // namespace Babel

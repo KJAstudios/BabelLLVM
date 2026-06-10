@@ -118,8 +118,10 @@ int main(int argCount, char *argv[]) {
   babel.OutputObjectFile(&outputFileName);
   // don't run the linker if the object file flag is set
   if (argData.GetObjectFileOnlyStatus()) {
+    llvm::errs() << "object file written to " << outputFileName << '\n';
     return 0;
   }
 
   RunLinker(*argData.GetOutputFile(), outputFileName);
+  llvm::errs() << "executable written to " << *argData.GetOutputFile() << '\n';
 };

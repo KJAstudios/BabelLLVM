@@ -3,11 +3,11 @@
 #include "Babel/DebugInfo.h"
 #include "Babel/ScopeStack.h"
 #include "Babel/Visitor.h"
-#include <llvm-20/llvm/IR/Type.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/Type.h>
 
 namespace Babel {
 class CodegenVisitor : public Visitor {
@@ -50,7 +50,8 @@ private:
   bool TryGetBuiltInFunctionName(std::string *babelName, llvm::Type *type,
                                  std::string &outputName);
   llvm::AllocaInst *CreateEntryBlockAlloca(llvm::Function *function,
-                                           std::string variableName);
+                                           const std::string &variableName);
+  void LogError(const std::string &error, TokenLocation location);
 };
 } // namespace Babel
 #endif

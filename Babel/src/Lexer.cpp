@@ -44,7 +44,6 @@ void Lexer::ReadFromSTDIN() {
 
 Babel::TokenData Lexer::GetNextToken() {
   if (stringCodeBuffer.empty()) {
-    std::cerr << "Buffer is empty\n";
     return {llvm::StringRef(), Token::tok_eof};
   }
 

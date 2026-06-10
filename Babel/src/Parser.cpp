@@ -2,8 +2,10 @@
 #include "Babel/AbstractSyntaxTree.h"
 #include "Babel/Token.h"
 #include "Babel/TokenData.h"
-#include <iostream>
 #include <llvm/ADT/StringRef.h>
+
+#include <iostream>
+
 #include <memory>
 #include <string>
 #include <utility>
@@ -33,7 +35,7 @@ void Parser::GetNextToken() { token = lexer->GetNextToken(); }
 std::unique_ptr<ProgramAST> Parser::Parse() {
   GetNextToken();
   if (token.GetTokenType() == Token::tok_eof) {
-    std::cerr << "No functions found";
+    LogError("No functions found in file.", token.GetTokenLocation());
     return nullptr;
   }
   std::unique_ptr<ProgramAST> program = std::make_unique<ProgramAST>();
@@ -45,7 +47,8 @@ std::unique_ptr<ProgramAST> Parser::Parse() {
       program->AddFunction(std::move(ParseFunction()));
       break;
     default:
-      std::cerr << "Only functions are supported at the top level\n";
+      LogError("Only functions are supported at the top level.",
+               token.GetTokenLocation());
       return nullptr;
     }
   }
@@ -71,14 +74,15 @@ std::unique_ptr<StatementAST> Parser::ParseIfStatement() {
 
   if (token.GetTokenType() != Token::tok_control ||
       token.GetTokenString() != "⟅") {
-    std::cerr << "Expected ⟅ after if statement\n";
+    LogError("Expected ⟅ after if statement.", token.GetTokenLocation());
     return nullptr;
   }
 
   GetNextToken();
   if (token.GetTokenType() != Token::tok_number &&
       token.GetTokenType() != Token::tok_identifier) {
-    std::cerr << "Expected condition after if statement\n";
+    LogError("Expected condition after if statement.",
+             token.GetTokenLocation());
     return nullptr;
   }
   // parse condition expression
@@ -86,20 +90,22 @@ std::unique_ptr<StatementAST> Parser::ParseIfStatement() {
 
   if (token.GetTokenType() != Token::tok_control ||
       token.GetTokenString() != "⟆") {
-    std::cerr << "Expected ⟆ after if statement condition\n";
+    LogError("Expected ⟆ after if statement condition.",
+             token.GetTokenLocation());
     return nullptr;
   }
 
   GetNextToken(); // consume the ⟆
   if (token.GetTokenType() != Token::tok_control ||
       token.GetTokenString() != "꧁") {
-    std::cerr << "Expected ꧁ before if statement then branch\n";
+    LogError("Expected ꧁ before if statement then branch.",
+             token.GetTokenLocation());
     return nullptr;
   }
 
   std::unique_ptr<StatementAST> thenBranch = ParseStatementBlock();
   if (thenBranch == nullptr) {
-    std::cerr << "Failed to parse then branch of if statement\n";
+    LogError("Failed to parse then branch of if statement.", location);
     return nullptr;
   }
 
@@ -108,14 +114,15 @@ std::unique_ptr<StatementAST> Parser::ParseIfStatement() {
     GetNextToken();
     if (token.GetTokenType() != Token::tok_control ||
         token.GetTokenString() != "꧁") {
-      std::cerr << "Expected ꧁ before if statement else branch\n";
+      LogError("Expected ꧁ before if statement else branch.",
+               token.GetTokenLocation());
       return nullptr;
     }
 
     elseBranch = ParseStatementBlock();
 
     if (elseBranch == nullptr) {
-      std::cerr << "Failed to parse else branch of if statement\n";
+      LogError("Failed to parse else branch of if statement.", location);
       return nullptr;
     }
   }
@@ -131,7 +138,8 @@ std::unique_ptr<FunctionAST> Parser::ParseFunction() {
   GetNextToken();
   if (token.GetTokenType() != Token::tok_control &&
       token.GetTokenString() != "⟅") {
-    std::cerr << "Expected argument list after function declaration";
+    LogError("Expected argument list after function declaration.",
+             token.GetTokenLocation());
     return nullptr;
   }
   // consume the open parenthesis
@@ -144,11 +152,12 @@ std::unique_ptr<FunctionAST> Parser::ParseFunction() {
     switch (token.GetTokenType()) {
     case Token::tok_control:
       if (!expectSeparator) {
-        std::cerr << "Expected Identifier as part of argument list";
+        LogError("Expected Identifier as part of argument list.",
+                 token.GetTokenLocation());
         return nullptr;
       }
       if (token.GetTokenString() != "᨞") {
-        std::cerr << "Expected separator";
+        LogError("Expected separator.", token.GetTokenLocation());
         return nullptr;
       }
       // eat the ᨞
@@ -157,7 +166,8 @@ std::unique_ptr<FunctionAST> Parser::ParseFunction() {
       break;
     case Token::tok_identifier:
       if (expectSeparator) {
-        std::cerr << "Expected separator after identifier";
+        LogError("Expected separator after identifier.",
+                 token.GetTokenLocation());
         return nullptr;
       }
       argumentNames.push_back(token.GetTokenString());
@@ -165,21 +175,22 @@ std::unique_ptr<FunctionAST> Parser::ParseFunction() {
       expectSeparator = true;
       break;
     default:
-      std::cerr << "invalid argument or separator";
+      LogError("Invalid argument or separator.", token.GetTokenLocation());
       return nullptr;
     }
   }
 
   if (token.GetTokenType() != Token::tok_control &&
       token.GetTokenString() != "⟆") {
-    std::cerr << "Expected end of argument list";
+    LogError("Expected end of argument list.", token.GetTokenLocation());
     return nullptr;
   }
   // consume the close parenthesis
   GetNextToken();
 
   if (token.GetTokenType() != Token::tok_identifier) {
-    std::cerr << "Expected identifer in function declaration";
+    LogError("Expected identifier in function declaration.",
+             token.GetTokenLocation());
     return nullptr;
   }
   std::string functionName = token.GetTokenString();
@@ -197,7 +208,8 @@ std::unique_ptr<FunctionAST> Parser::ParseFunction() {
 
   if (token.GetTokenType() != Token::tok_control &&
       token.GetTokenString() != "꧁") {
-    std::cerr << "Expected ꧁ at the beginning of the function\n";
+    LogError("Expected ꧁ at the beginning of the function.",
+             token.GetTokenLocation());
     return nullptr;
   }
   GetNextToken(); // consume the ꧁ token
@@ -208,7 +220,7 @@ std::unique_ptr<FunctionAST> Parser::ParseFunction() {
     std::unique_ptr<StatementAST> statement = ParseStatement();
 
     if (statement == nullptr) {
-      std::cerr << "Failed to parse statement in function body\n";
+      LogError("Failed to parse statement in function body.", location);
       return nullptr;
     }
 
@@ -222,7 +234,8 @@ std::unique_ptr<StatementAST> Parser::ParseStatementBlock() {
   TokenLocation location = token.GetTokenLocation();
   if (token.GetTokenType() != Token::tok_control &&
       token.GetTokenString() != "꧁") {
-    std::cerr << "Expected ꧁ at the beginning of the statement block\n";
+    LogError("Expected ꧁ at the beginning of the statement block.",
+             token.GetTokenLocation());
     return nullptr;
   }
   GetNextToken(); // consume the ꧁ token
@@ -233,7 +246,7 @@ std::unique_ptr<StatementAST> Parser::ParseStatementBlock() {
     std::unique_ptr<StatementAST> statement = ParseStatement();
 
     if (statement == nullptr) {
-      std::cerr << "Failed to parse statement in statement block\n";
+      LogError("Failed to parse statement in statement block.", location);
       return nullptr;
     }
 
@@ -257,17 +270,17 @@ std::unique_ptr<StatementAST> Parser::ParseIdentifierStatement() {
     return ParseFunctionCall(location, identifier);
   }
 
-  std::cerr << "Unexpected token after identifier. Expected either assignement "
-               "or function call\n";
+  LogError("Unexpected token after identifier. Expected either assignment or "
+           "function call.",
+           token.GetTokenLocation());
   return nullptr;
 }
 
 std::unique_ptr<StatementAST>
 Parser::ParseFunctionCall(TokenLocation location, std::string functionName) {
-  std::cerr << "Function call created with name " << functionName << '\n';
   if (token.GetTokenType() != Token::tok_control ||
       token.GetTokenString() != "⟅") {
-    std::cerr << "Expected ⟅ after function call\n";
+    LogError("Expected ⟅ after function call.", token.GetTokenLocation());
     return nullptr;
   }
 
@@ -279,7 +292,8 @@ Parser::ParseFunctionCall(TokenLocation location, std::string functionName) {
     std::unique_ptr<ExpressionAST> argument = ParseExpression();
 
     if (argument == nullptr) {
-      std::cerr << "Failed to parse argument in function call\n";
+      LogError("Failed to parse argument in function call.",
+               token.GetTokenLocation());
       return nullptr;
     }
 
@@ -290,8 +304,9 @@ Parser::ParseFunctionCall(TokenLocation location, std::string functionName) {
 
   if (token.GetTokenType() != Token::tok_control ||
       token.GetTokenString() != "~") {
-    std::cerr << "Expected ~ at the end of the function call statement. "
-                 "Multiple arguments are not supported yet.\n";
+    LogError("Expected ~ at the end of the function call statement. Multiple "
+             "arguments are not supported yet.",
+             token.GetTokenLocation());
     return nullptr;
   }
   GetNextToken(); // consume the ~ token
@@ -305,21 +320,23 @@ Parser::ParseAssignmentStatement(TokenLocation location,
                                  std::string identifier) {
   if (token.GetTokenType() != Token::tok_operator ||
       token.GetTokenString() != "≔") {
-    std::cerr << "Expected ≔ after identifier in assignment statement\n";
+    LogError("Expected ≔ after identifier in assignment statement.",
+             token.GetTokenLocation());
     return nullptr;
   }
 
   GetNextToken(); // consume the ≔ token
   if (token.GetTokenType() != Token::tok_number &&
       token.GetTokenType() != Token::tok_identifier) {
-    std::cerr << "Expected expression after ≔ in assignment statement\n";
+    LogError("Expected expression after ≔ in assignment statement.",
+             token.GetTokenLocation());
     return nullptr;
   }
 
   std::unique_ptr<ExpressionAST> initializer = ParseExpression();
   if (initializer == nullptr) {
-    std::cerr
-        << "Failed to parse initializer expression in assignment statement\n";
+    LogError("Failed to parse initializer expression in assignment statement.",
+             location);
     return nullptr;
   }
   return std::make_unique<AssignmentStatementAST>(
@@ -329,7 +346,7 @@ Parser::ParseAssignmentStatement(TokenLocation location,
 std::unique_ptr<ExpressionAST> Parser::ParseExpression() {
   auto LeftHandSide = ParsePrimary();
   if (LeftHandSide == nullptr) {
-    std::cerr << "Failed to parse expression\n";
+    LogError("Failed to parse expression.", token.GetTokenLocation());
     return nullptr;
   }
 
@@ -356,7 +373,8 @@ Parser::ParseBinaryOpRHS(int precedence,
 
     // check if it's a valid operator
     if (operatorPrecedenceIt == operatorPrecedence.end()) {
-      std::cerr << "Invalid operator: " << operatorStr << "\n";
+      LogError(std::string("Invalid operator: ") + operatorStr + ".",
+               token.GetTokenLocation());
       return leftHandSide;
     }
 
@@ -432,7 +450,7 @@ std::unique_ptr<ExpressionAST> Parser::ParseNumberExpression() {
   std::string numberStr = token.GetTokenString();
   GetNextToken(); // consume the number token
   if (numberStr.find('.') != std::string::npos) {
-    std::cerr << "Floating point numbers not supported yet\n";
+    LogError("Floating point numbers not supported.", token.GetTokenLocation());
     return nullptr;
   }
 
@@ -444,7 +462,8 @@ std::unique_ptr<ExpressionAST> Parser::ParseNumberExpression() {
 bool Parser::CheckEndOfStatement() {
   if (token.GetTokenType() != Token::tok_control ||
       token.GetTokenString() != "~") {
-    std::cerr << "Expected ~ at the end of the statement\n";
+    LogError("Expected ~ at the end of the statement.",
+             token.GetTokenLocation());
     return false;
   }
 
@@ -464,5 +483,10 @@ bool Parser::CheckEndOfFunction() {
   GetNextToken(); // consume the ꧂ token
 
   return true;
+}
+
+void Parser::LogError(const std::string &error, TokenLocation location) {
+  std::cerr << "{ Line : " << location.GetLine()
+            << " Position : " << location.GetColumn() << " } " << error << '\n';
 }
 } // namespace Babel

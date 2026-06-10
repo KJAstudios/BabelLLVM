@@ -2,6 +2,7 @@
 #include "Babel/AbstractSyntaxTree.h"
 #include "Babel/DebugInfo.h"
 #include "Babel/ScopeStack.h"
+#include <iostream>
 #include <llvm/ADT/APFloat.h>
 #include <llvm/ADT/APInt.h>
 #include <llvm/IR/BasicBlock.h>
@@ -19,7 +20,7 @@
 namespace Babel {
 CodegenVisitor::CodegenVisitor(llvm::LLVMContext &context,
                                llvm::IRBuilder<> &builder, llvm::Module &module)
-    : context(context), builder(builder), module(module) {
+    : context(context), builder(builder), module(module), debugInfo(nullptr) {
   scopeStack = std::make_unique<ScopeStack>();
 
   // map builtin functions
@@ -32,7 +33,7 @@ void CodegenVisitor::AttachDebugInfo(DebugInfo *debugInfoPtr) {
 
 llvm::AllocaInst *
 CodegenVisitor::CreateEntryBlockAlloca(llvm::Function *function,
-                                       std::string variableName) {
+                                       const std::string &variableName) {
   llvm::IRBuilder<> tempBuilder(&function->getEntryBlock(),
                                 function->getEntryBlock().begin());
   return tempBuilder.CreateAlloca(llvm::Type::getInt64Ty(context), nullptr,
@@ -40,24 +41,17 @@ CodegenVisitor::CreateEntryBlockAlloca(llvm::Function *function,
 }
 
 void CodegenVisitor::VisitProgram(ProgramAST *program) {
-  std::cerr << "Found " << program->GetFunctions()->size()
-            << " functions in the program\n";
+  ;
   for (const auto &function : *program->GetFunctions()) {
-    std::cerr << function->GetPrototype()->GetName() << " found\n";
     function->GetPrototype()->Visit(*this);
     if (statementGenerationFailed) {
-      std::cerr << "Error generating function definitions";
       return;
     }
   }
 
-  std::cerr << "Found " << program->GetFunctions()->size()
-            << " functions in the program\n";
   for (const auto &function : *program->GetFunctions()) {
-    std::cerr << function->GetPrototype()->GetName() << " found\n";
     function->Visit(*this);
     if (statementGenerationFailed) {
-      std::cerr << "Error generating functions";
       return;
     }
   }
@@ -90,28 +84,23 @@ void CodegenVisitor::VisitFunction(FunctionAST *function) {
     statementGenerationFailed = true;
     return;
   }
-  std::cerr << "Function Prototype found for function generation\n";
   std::string *prototypeName = prototype->GetName();
 
-  // TODO handle extern functions
   // check if the function already exists
   llvm::Function *llvmFunction = module.getFunction(*prototypeName);
 
   // if the function already exists, don't redefine it
   if (llvmFunction == nullptr) {
-    std::cerr << "Function does not exist\n";
     statementGenerationFailed = true;
     return;
   }
 
   llvmFunction = module.getFunction(*prototypeName);
   if (llvmFunction == nullptr) {
-    std::cerr << "Function prototype not found\n";
     statementGenerationFailed = true;
     return;
   }
 
-  std::cerr << "Function found in module\n";
   // create the basic block for the function
   llvm::BasicBlock *block =
       llvm::BasicBlock::Create(context, "entry", llvmFunction);
@@ -120,7 +109,7 @@ void CodegenVisitor::VisitFunction(FunctionAST *function) {
 
   // create the debug information/scope for the function
   debugInfo->CreateFunction(*prototype->GetName(), llvmFunction);
-  
+
   // add scope for the function variables
   scopeStack->PushScope();
 
@@ -139,7 +128,6 @@ void CodegenVisitor::VisitFunction(FunctionAST *function) {
     scopeStack->AddVariable(Arg.getName().str(), alloca);
   }
 
-  std::cerr << "generating function body\n";
   debugInfo->EmitLocation(function->GetBody(), builder);
   function->GetBody()->Visit(*this);
   if (statementGenerationFailed) {
@@ -167,15 +155,15 @@ void CodegenVisitor::VisitFunctionCallStatement(
   }
   llvm::Function *function = FindFunction(&functionName);
   if (function == nullptr) {
-    std::cerr << "Attempting to call function " << functionName
-              << " that does not exist\n";
+    LogError(std::string("Attempting to call function ") + functionName + " that does not exist.",
+             functionCall->GetLocation());
     statementGenerationFailed = true;
     return;
   }
 
   if (function->arg_size() != functionCall->GetArguments()->size()) {
-    std::cerr << "Invalid number of arguments for call to function "
-              << functionCall->GetName() << '\n';
+    LogError(std::string("Invalid number of arguments for call to function ") + *functionCall->GetName() + ".",
+             functionCall->GetLocation());
     statementGenerationFailed = true;
     return;
   }
@@ -185,7 +173,8 @@ void CodegenVisitor::VisitFunctionCallStatement(
   for (const auto &argumentExpression : *arguments) {
     argumentExpression->Visit(*this);
     if (lastResult == nullptr) {
-      std::cerr << "Invalid argument for function call";
+      LogError(std::string("Invalid argument for function call to ") + functionName + ".",
+               argumentExpression->GetLocation());
       statementGenerationFailed = true;
       return;
     }
@@ -200,11 +189,11 @@ void CodegenVisitor::VisitIfStatement(IfStatementAST *ifStatement) {
   ifStatement->GetCondition()->Visit(*this);
   llvm::Value *conditionValue = lastResult;
   if (conditionValue == nullptr) {
+    LogError("Invalid condition expression in if statement.",
+             ifStatement->GetLocation());
     statementGenerationFailed = true;
     return;
   }
-
-  // TODO evaluate condition
 
   llvm::Function *function = builder.GetInsertBlock()->getParent();
   llvm::BasicBlock *thenBlock =
@@ -234,10 +223,8 @@ void CodegenVisitor::VisitIfStatement(IfStatementAST *ifStatement) {
 }
 
 void CodegenVisitor::VisitStatementBlock(StatementBlockAST *statmentBlock) {
-  std::cerr << "Creating statement block\n";
   // push a new scope for the block
   scopeStack->PushScope();
-  std::cerr << "Statement Block scope created\n";
   // then generate the statements for the block
   auto *body = statmentBlock->GetBody();
   for (auto &statement : *body) {
@@ -247,10 +234,8 @@ void CodegenVisitor::VisitStatementBlock(StatementBlockAST *statmentBlock) {
     }
   }
 
-  std::cerr << "Removing statement scope\n";
   // remove the block scope from the stack
   scopeStack->PopScope();
-  std::cerr << "Statement scope removed. Generation completed\n";
 }
 
 void CodegenVisitor::VisitAssignmentStatement(
@@ -265,12 +250,13 @@ void CodegenVisitor::VisitAssignmentStatement(
 
   // then emit the initalizer before adding the variable to scope to prevent
   // the initalizer from referencing the variable itself
-  llvm::Value *initialValue;
+  llvm::Value *initialValue = nullptr;
   // if the initalizer exists, grab the inital value of the variable
   if (initalizer != nullptr) {
     initalizer->Visit(*this);
     if (lastResult == nullptr) {
-      std::cerr << "Invalid Initalizer for variable " << variableName << "\n";
+      LogError(std::string("Invalid initializer for variable ") + variableName + ".",
+               assignmentStatement->GetLocation());
       statementGenerationFailed = true;
       return;
     }
@@ -278,8 +264,6 @@ void CodegenVisitor::VisitAssignmentStatement(
   }
   // else set it to the default, which for now is 0
   else {
-    // TODO update this to get correct type if/when types are added
-    // assume int for now, will need to change when we add types
     initialValue =
         llvm::ConstantInt::get(llvm::Type::getInt64Ty(context), 0, true);
   }
@@ -292,7 +276,6 @@ void CodegenVisitor::VisitAssignmentStatement(
 
   // finally add the variable to scope
   scopeStack->AddVariable(variableName, alloca);
-  std::cerr << "Variable " << variableName << "Added to scope stack\n";
 }
 
 void CodegenVisitor::VisitIntExpression(IntExpressionAST *intExpression) {
@@ -313,8 +296,8 @@ void CodegenVisitor::VisitVariableExpression(
   llvm::AllocaInst *alloca =
       scopeStack->GetVariableValue(variableExpression->GetName());
   if (alloca == nullptr) {
-    std::cerr << "Variable " << *variableExpression->GetName()
-              << " Does not exist\n";
+    LogError(std::string("Variable ") + *variableExpression->GetName() + " does not exist.",
+             variableExpression->GetLocation());
     lastResult = nullptr;
     return;
   }
@@ -328,14 +311,16 @@ void CodegenVisitor::VisitBinaryExpression(
   debugInfo->EmitLocation(binaryExpression, builder);
   binaryExpression->GetLHS()->Visit(*this);
   if (lastResult == nullptr) {
-    std::cerr << "Invalid left hand side for binary expression\n";
+    LogError(std::string("Invalid left-hand side for binary expression for operator '") + *binaryExpression->GetBinaryOperator() + "'.",
+             binaryExpression->GetLocation());
     return;
   }
   llvm::Value *leftHandSide = lastResult;
 
   binaryExpression->GetRHS()->Visit(*this);
   if (lastResult == nullptr) {
-    std::cerr << "Invalid right hand side for binary expression";
+    LogError(std::string("Invalid right-hand side for binary expression for operator '") + *binaryExpression->GetBinaryOperator() + "'.",
+             binaryExpression->GetLocation());
     return;
   }
   llvm::Value *rightHandSide = lastResult;
@@ -366,7 +351,8 @@ void CodegenVisitor::VisitBinaryExpression(
     lastResult = builder.CreateICmpSGT(leftHandSide, rightHandSide, "cmpgttmp");
     return;
   }
-  std::cerr << "Invalid binary operator " << binaryOperator;
+  LogError(std::string("Invalid binary operator ") + binaryOperator + ".",
+           binaryExpression->GetLocation());
   lastResult = nullptr;
 }
 
@@ -421,6 +407,11 @@ llvm::Function *CodegenVisitor::FindFunction(std::string *name) {
   }
 
   return FindOrDeclareBuiltinFunction(name);
+}
+
+void CodegenVisitor::LogError(const std::string &error, TokenLocation location) {
+  std::cerr << "{ Line : " << location.GetLine()
+            << " Position : " << location.GetColumn() << " } " << error << '\n';
 }
 
 } // namespace Babel

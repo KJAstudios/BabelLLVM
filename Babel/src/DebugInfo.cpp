@@ -1,12 +1,11 @@
 #include "Babel/DebugInfo.h"
 #include "Babel/AbstractSyntaxTree.h"
-#include <llvm-20/llvm/ADT/StringRef.h>
-#include <llvm-20/llvm/BinaryFormat/Dwarf.h>
-#include <llvm-20/llvm/IR/Argument.h>
-#include <llvm-20/llvm/IR/DIBuilder.h>
-#include <llvm-20/llvm/IR/DebugInfoMetadata.h>
-#include <llvm-20/llvm/IR/DebugLoc.h>
-#include <llvm-20/llvm/IR/IRBuilder.h>
+#include <llvm/ADT/StringRef.h>
+#include <llvm/BinaryFormat/Dwarf.h>
+#include <llvm/IR/Argument.h>
+#include <llvm/IR/DIBuilder.h>
+#include <llvm/IR/DebugInfoMetadata.h>
+#include <llvm/IR/DebugLoc.h>
 #include <llvm/IR/IRBuilder.h>
 #include <memory>
 
@@ -19,7 +18,8 @@ DebugInfo::DebugInfo(std::string &inputFileName, llvm::Module &module)
           BabelLanguageCode, dwarfBuilder->createFile(inputFileName, "."),
           "Babel Compiler", false, "", 0)),
       Unit(dwarfBuilder->createFile(compileUnit->getFilename(),
-                                    compileUnit->getDirectory())) {}
+                                    compileUnit->getDirectory())),
+      intType(nullptr) {}
 
 void DebugInfo::CreateFunction(std::string &functionName,
                                llvm::Function *function) {

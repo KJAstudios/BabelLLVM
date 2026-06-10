@@ -35,6 +35,7 @@ private:
   std::unique_ptr<ExpressionAST> ParseNumberExpression();
   bool CheckEndOfStatement();
   bool CheckEndOfFunction();
+  void LogError(const std::string &error, TokenLocation location);
 };
 } // namespace Babel
 #endif

@@ -1,10 +1,10 @@
 #ifndef DEBUGINFO_H
 #define DEBUGINFO_H
-#include <llvm-20/llvm/IR/Instructions.h>
 #include <llvm/IR/Argument.h>
 #include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Instructions.h>
 #include <llvm/IR/Metadata.h>
 #include <memory>
 namespace Babel {
