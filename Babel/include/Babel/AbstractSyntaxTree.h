@@ -24,6 +24,7 @@ public:
   StatementAST &operator=(StatementAST &&) = delete;
   virtual ~StatementAST() = default;
   virtual void Visit(Visitor &visitor) = 0;
+  const TokenLocation &GetLocation() { return location; }
 };
 
 class ExpressionAST {
@@ -40,6 +41,7 @@ public:
   ExpressionAST &operator=(ExpressionAST &&) = delete;
   virtual ~ExpressionAST() = default;
   virtual void Visit(Visitor &visitor) = 0;
+  const TokenLocation &GetLocation() { return location; }
 };
 
 // statement block is a sequence of statements that are executed in order. This
@@ -107,6 +109,7 @@ public:
   }
   PrototypeAST *GetPrototype() { return prototype.get(); }
   StatementBlockAST *GetBody() { return body.get(); }
+  const TokenLocation &GetLocation() { return tokenLocation; }
   void Visit(class Visitor &visitor) { visitor.VisitFunction(this); }
 };
 

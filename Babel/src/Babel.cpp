@@ -25,8 +25,8 @@ Babel::Babel() {
   context = std::make_unique<llvm::LLVMContext>();
   module = std::make_unique<llvm::Module>("Babel", *context);
   IRBuilder = std::make_unique<llvm::IRBuilder<>>(*context);
-  codegenVisitor = std::make_unique<CodegenVisitor>(
-      context.get(), IRBuilder.get(), module.get());
+  codegenVisitor =
+      std::make_unique<CodegenVisitor>(*context, *IRBuilder, *module);
 };
 
 int Babel::Run(BabelArgs &args) {
