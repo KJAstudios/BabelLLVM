@@ -1,6 +1,8 @@
 #ifndef ABSTRACTSYNTAXTREE_H
 #define ABSTRACTSYNTAXTREE_H
 #include "Babel/CodegenVisitor.h"
+#include "Babel/Token.h"
+#include "Babel/TokenData.h"
 #include "Babel/Visitor.h"
 #include <iostream>
 #include <llvm/ADT/StringRef.h>
@@ -9,8 +11,13 @@
 #include <vector>
 namespace Babel {
 class StatementAST {
+private:
+  TokenLocation location;
+
 public:
   StatementAST() = default;
+  explicit StatementAST(TokenLocation location) : location(location) {}
+  StatementAST(int line, int column) : location(line, column) {}
   StatementAST(const StatementAST &) = default;
   StatementAST(StatementAST &&) = delete;
   StatementAST &operator=(const StatementAST &) = default;
@@ -20,8 +27,13 @@ public:
 };
 
 class ExpressionAST {
+private:
+  TokenLocation location;
+
 public:
   ExpressionAST() = default;
+  explicit ExpressionAST(TokenLocation location) : location(location) {}
+  ExpressionAST(int line, int column) : location(line, column) {}
   ExpressionAST(const ExpressionAST &) = default;
   ExpressionAST(ExpressionAST &&) = delete;
   ExpressionAST &operator=(const ExpressionAST &) = default;
@@ -39,6 +51,12 @@ private:
 
 public:
   StatementBlockAST() { std::cerr << "Created statement block\n"; }
+  explicit StatementBlockAST(TokenLocation location) : StatementAST(location) {
+    std::cerr << "Created statement block\n";
+  }
+  StatementBlockAST(int line, int column) : StatementAST(line, column) {
+    std::cerr << "Created statement block\n";
+  }
   void AddStatement(std::unique_ptr<StatementAST> statement) {
     body.push_back(std::move(statement));
   }
@@ -69,12 +87,21 @@ class FunctionAST {
 private:
   std::unique_ptr<PrototypeAST> prototype;
   std::unique_ptr<StatementBlockAST> body;
+  TokenLocation tokenLocation;
 
 public:
   FunctionAST() = delete;
   explicit FunctionAST(std::unique_ptr<PrototypeAST> prototype,
                        std::unique_ptr<StatementBlockAST> body)
       : prototype(std::move(prototype)), body(std::move(body)) {
+    std::cerr << "Created function with name "
+              << this->prototype->GetName()->c_str() << "\n";
+  }
+  explicit FunctionAST(TokenLocation location,
+                       std::unique_ptr<PrototypeAST> prototype,
+                       std::unique_ptr<StatementBlockAST> body)
+      : tokenLocation(location), prototype(std::move(prototype)),
+        body(std::move(body)) {
     std::cerr << "Created function with name "
               << this->prototype->GetName()->c_str() << "\n";
   }
@@ -105,6 +132,15 @@ private:
 public:
   FunctionCallStatementAST() = delete;
   explicit FunctionCallStatementAST(
+      TokenLocation location, std::string functionName,
+      std::vector<std::unique_ptr<ExpressionAST>> arguments)
+      : StatementAST(location), functionName(std::move(functionName)),
+        arguments(std::move(arguments)) {
+    std::cerr << "Created function call statement with name "
+              << this->functionName << " and " << this->arguments.size()
+              << " arguments\n";
+  }
+  explicit FunctionCallStatementAST(
       std::string functionName,
       std::vector<std::unique_ptr<ExpressionAST>> arguments)
       : functionName(std::move(functionName)), arguments(std::move(arguments)) {
@@ -128,6 +164,14 @@ private:
   std::unique_ptr<StatementAST> elseBranch;
 
 public:
+  IfStatementAST(TokenLocation location,
+                 std::unique_ptr<ExpressionAST> condition,
+                 std::unique_ptr<StatementAST> thenBranch,
+                 std::unique_ptr<StatementAST> elseBranch)
+      : StatementAST(location), condition(std::move(condition)),
+        thenBranch(std::move(thenBranch)), elseBranch(std::move(elseBranch)) {
+    std::cerr << "Created if statement\n";
+  }
   IfStatementAST(std::unique_ptr<ExpressionAST> condition,
                  std::unique_ptr<StatementAST> thenBranch,
                  std::unique_ptr<StatementAST> elseBranch)
@@ -150,6 +194,13 @@ private:
   std::unique_ptr<ExpressionAST> initializer;
 
 public:
+  AssignmentStatementAST(TokenLocation location, std::string name,
+                         std::unique_ptr<ExpressionAST> initializer)
+      : StatementAST(location), name(std::move(name)),
+        initializer(std::move(initializer)) {
+    std::cerr << "Created assignment statement with name " << this->name
+              << "\n";
+  }
   AssignmentStatementAST(std::string name,
                          std::unique_ptr<ExpressionAST> initializer)
       : name(std::move(name)), initializer(std::move(initializer)) {
@@ -169,6 +220,10 @@ private:
 
 public:
   VariableExpressionAST() = delete;
+  VariableExpressionAST(TokenLocation location, std::string name)
+      : ExpressionAST(location), name(std::move(name)) {
+    std::cerr << "Created variable expression with name " << this->name << "\n";
+  }
   explicit VariableExpressionAST(std::string name) : name(std::move(name)) {
     std::cerr << "Created variable expression with name " << this->name << "\n";
   }
@@ -184,6 +239,10 @@ private:
 
 public:
   IntExpressionAST() = delete;
+  IntExpressionAST(TokenLocation location, int value)
+      : ExpressionAST(location), value(value) {
+    std::cerr << "Created int expression with value " << this->value << "\n";
+  }
   explicit IntExpressionAST(int value) : value(value) {
     std::cerr << "Created int expression with value " << this->value << "\n";
   }
@@ -199,6 +258,10 @@ private:
 
 public:
   DoubleExpressionAST() = delete;
+  DoubleExpressionAST(TokenLocation location, double value)
+      : ExpressionAST(location), value(value) {
+    std::cerr << "Created double expression with value " << this->value << "\n";
+  }
   explicit DoubleExpressionAST(double value) : value(value) {
     std::cerr << "Created double expression with value " << this->value << "\n";
   }
@@ -216,6 +279,14 @@ private:
 
 public:
   BinaryExpressionAST() = delete;
+  BinaryExpressionAST(TokenLocation location, std::string binaryOperator,
+                      std::unique_ptr<ExpressionAST> lhs,
+                      std::unique_ptr<ExpressionAST> rhs)
+      : ExpressionAST(location), binaryOperator(std::move(binaryOperator)),
+        lhs(std::move(lhs)), rhs(std::move(rhs)) {
+    std::cerr << "Created binary expression with operator "
+              << this->binaryOperator << "\n";
+  }
   BinaryExpressionAST(std::string binaryOperator,
                       std::unique_ptr<ExpressionAST> lhs,
                       std::unique_ptr<ExpressionAST> rhs)

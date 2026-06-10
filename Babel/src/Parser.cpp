@@ -1,6 +1,7 @@
 #include "Babel/Parser.h"
 #include "Babel/AbstractSyntaxTree.h"
 #include "Babel/Token.h"
+#include "Babel/TokenData.h"
 #include <iostream>
 #include <llvm/ADT/StringRef.h>
 #include <memory>
@@ -64,6 +65,8 @@ std::unique_ptr<StatementAST> Parser::ParseStatement() {
 }
 
 std::unique_ptr<StatementAST> Parser::ParseIfStatement() {
+  // store the location of the if statement
+  TokenLocation location = token.GetTokenLocation();
   GetNextToken(); // consume the if token
 
   if (token.GetTokenType() != Token::tok_control ||
@@ -117,12 +120,14 @@ std::unique_ptr<StatementAST> Parser::ParseIfStatement() {
     }
   }
 
-  return std::make_unique<IfStatementAST>(
-      std::move(condition), std::move(thenBranch), std::move(elseBranch));
+  return std::make_unique<IfStatementAST>(location, std::move(condition),
+                                          std::move(thenBranch),
+                                          std::move(elseBranch));
 }
 
 std::unique_ptr<FunctionAST> Parser::ParseFunction() {
-  // Consume the function keywork
+  TokenLocation location = token.GetTokenLocation();
+  // Consume the function keyword
   GetNextToken();
   if (token.GetTokenType() != Token::tok_control &&
       token.GetTokenString() != "⟅") {
@@ -209,10 +214,12 @@ std::unique_ptr<FunctionAST> Parser::ParseFunction() {
 
     body->AddStatement(std::move(statement));
   }
-  return std::make_unique<FunctionAST>(std::move(prototype), std::move(body));
+  return std::make_unique<FunctionAST>(location, std::move(prototype),
+                                       std::move(body));
 }
 
 std::unique_ptr<StatementAST> Parser::ParseStatementBlock() {
+  TokenLocation location = token.GetTokenLocation();
   if (token.GetTokenType() != Token::tok_control &&
       token.GetTokenString() != "꧁") {
     std::cerr << "Expected ꧁ at the beginning of the statement block\n";
@@ -221,7 +228,7 @@ std::unique_ptr<StatementAST> Parser::ParseStatementBlock() {
   GetNextToken(); // consume the ꧁ token
 
   std::unique_ptr<StatementBlockAST> function =
-      std::make_unique<StatementBlockAST>();
+      std::make_unique<StatementBlockAST>(location);
   while (!CheckEndOfFunction()) {
     std::unique_ptr<StatementAST> statement = ParseStatement();
 
@@ -236,17 +243,18 @@ std::unique_ptr<StatementAST> Parser::ParseStatementBlock() {
 }
 
 std::unique_ptr<StatementAST> Parser::ParseIdentifierStatement() {
+  TokenLocation location = token.GetTokenLocation();
   std::string identifier = token.GetTokenString();
   GetNextToken(); // consume the identifier token
 
   if (token.GetTokenType() == Token::tok_operator &&
       token.GetTokenString() == "≔") {
-    return ParseAssignmentStatement(identifier);
+    return ParseAssignmentStatement(location, identifier);
   }
 
   if (token.GetTokenType() == Token::tok_control &&
       token.GetTokenString() == "⟅") {
-    return ParseFunctionCall(identifier);
+    return ParseFunctionCall(location, identifier);
   }
 
   std::cerr << "Unexpected token after identifier. Expected either assignement "
@@ -255,7 +263,7 @@ std::unique_ptr<StatementAST> Parser::ParseIdentifierStatement() {
 }
 
 std::unique_ptr<StatementAST>
-Parser::ParseFunctionCall(std::string functionName) {
+Parser::ParseFunctionCall(TokenLocation location, std::string functionName) {
   std::cerr << "Function call created with name " << functionName << '\n';
   if (token.GetTokenType() != Token::tok_control ||
       token.GetTokenString() != "⟅") {
@@ -288,12 +296,13 @@ Parser::ParseFunctionCall(std::string functionName) {
   }
   GetNextToken(); // consume the ~ token
 
-  return std::make_unique<FunctionCallStatementAST>(std::move(functionName),
-                                                    std::move(arguments));
+  return std::make_unique<FunctionCallStatementAST>(
+      location, std::move(functionName), std::move(arguments));
 }
 
 std::unique_ptr<StatementAST>
-Parser::ParseAssignmentStatement(std::string identifier) {
+Parser::ParseAssignmentStatement(TokenLocation location,
+                                 std::string identifier) {
   if (token.GetTokenType() != Token::tok_operator ||
       token.GetTokenString() != "≔") {
     std::cerr << "Expected ≔ after identifier in assignment statement\n";
@@ -313,8 +322,8 @@ Parser::ParseAssignmentStatement(std::string identifier) {
         << "Failed to parse initializer expression in assignment statement\n";
     return nullptr;
   }
-  return std::make_unique<AssignmentStatementAST>(std::move(identifier),
-                                                  std::move(initializer));
+  return std::make_unique<AssignmentStatementAST>(
+      location, std::move(identifier), std::move(initializer));
 }
 
 std::unique_ptr<ExpressionAST> Parser::ParseExpression() {
@@ -411,12 +420,15 @@ std::unique_ptr<ExpressionAST> Parser::ParsePrimary() {
 }
 
 std::unique_ptr<ExpressionAST> Parser::ParseIdentifierExpression() {
+  TokenLocation location = token.GetTokenLocation();
   std::string identifier = token.GetTokenString();
   GetNextToken(); // consume the identifier token
-  return std::make_unique<VariableExpressionAST>(identifier);
+  return std::make_unique<VariableExpressionAST>(location, identifier);
 }
 
 std::unique_ptr<ExpressionAST> Parser::ParseNumberExpression() {
+  TokenLocation location = token.GetTokenLocation();
+
   std::string numberStr = token.GetTokenString();
   GetNextToken(); // consume the number token
   if (numberStr.find('.') != std::string::npos) {
@@ -424,7 +436,7 @@ std::unique_ptr<ExpressionAST> Parser::ParseNumberExpression() {
     return nullptr;
   }
 
-  return std::make_unique<IntExpressionAST>(std::stoi(numberStr));
+  return std::make_unique<IntExpressionAST>(location, std::stoi(numberStr));
 }
 
 // all statements will end with  ~.

@@ -4,7 +4,7 @@
 namespace Babel {
 
 TokenData::TokenData(llvm::StringRef tokenString, Token tokenType, int line, int column)
-    : tokenString(tokenString), tokenType(tokenType), line(line), column(column) {
+    : tokenString(tokenString), tokenType(tokenType), tokenLocation(line, column) {
 }
 
 Token TokenData::GetTokenType(){
@@ -13,5 +13,9 @@ Token TokenData::GetTokenType(){
 
 std::string TokenData::GetTokenString(){
 	return tokenString.str();
+}
+
+TokenLocation TokenData::GetTokenLocation(){
+	return tokenLocation;
 }
 } // namespace Babel
