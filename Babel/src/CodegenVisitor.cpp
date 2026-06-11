@@ -155,14 +155,16 @@ void CodegenVisitor::VisitFunctionCallStatement(
   }
   llvm::Function *function = FindFunction(&functionName);
   if (function == nullptr) {
-    LogError(std::string("Attempting to call function ") + functionName + " that does not exist.",
+    LogError(std::string("Attempting to call function ") + functionName +
+                 " that does not exist.",
              functionCall->GetLocation());
     statementGenerationFailed = true;
     return;
   }
 
   if (function->arg_size() != functionCall->GetArguments()->size()) {
-    LogError(std::string("Invalid number of arguments for call to function ") + *functionCall->GetName() + ".",
+    LogError(std::string("Invalid number of arguments for call to function ") +
+                 *functionCall->GetName() + ".",
              functionCall->GetLocation());
     statementGenerationFailed = true;
     return;
@@ -173,7 +175,8 @@ void CodegenVisitor::VisitFunctionCallStatement(
   for (const auto &argumentExpression : *arguments) {
     argumentExpression->Visit(*this);
     if (lastResult == nullptr) {
-      LogError(std::string("Invalid argument for function call to ") + functionName + ".",
+      LogError(std::string("Invalid argument for function call to ") +
+                   functionName + ".",
                argumentExpression->GetLocation());
       statementGenerationFailed = true;
       return;
@@ -255,7 +258,8 @@ void CodegenVisitor::VisitAssignmentStatement(
   if (initalizer != nullptr) {
     initalizer->Visit(*this);
     if (lastResult == nullptr) {
-      LogError(std::string("Invalid initializer for variable ") + variableName + ".",
+      LogError(std::string("Invalid initializer for variable ") + variableName +
+                   ".",
                assignmentStatement->GetLocation());
       statementGenerationFailed = true;
       return;
@@ -270,6 +274,9 @@ void CodegenVisitor::VisitAssignmentStatement(
 
   // create the alloca point for the variable
   llvm::AllocaInst *alloca = CreateEntryBlockAlloca(function, variableName);
+  debugInfo->DeclareVariable(variableName, alloca,
+                             assignmentStatement->GetLocation().GetLine(),
+                             builder);
   // emit a store for the inital value into the alloca
   builder.CreateStore(initialValue, alloca);
   debugInfo->EmitLocation(assignmentStatement, builder);
@@ -296,7 +303,8 @@ void CodegenVisitor::VisitVariableExpression(
   llvm::AllocaInst *alloca =
       scopeStack->GetVariableValue(variableExpression->GetName());
   if (alloca == nullptr) {
-    LogError(std::string("Variable ") + *variableExpression->GetName() + " does not exist.",
+    LogError(std::string("Variable ") + *variableExpression->GetName() +
+                 " does not exist.",
              variableExpression->GetLocation());
     lastResult = nullptr;
     return;
@@ -311,16 +319,22 @@ void CodegenVisitor::VisitBinaryExpression(
   debugInfo->EmitLocation(binaryExpression, builder);
   binaryExpression->GetLHS()->Visit(*this);
   if (lastResult == nullptr) {
-    LogError(std::string("Invalid left-hand side for binary expression for operator '") + *binaryExpression->GetBinaryOperator() + "'.",
-             binaryExpression->GetLocation());
+    LogError(
+        std::string(
+            "Invalid left-hand side for binary expression for operator '") +
+            *binaryExpression->GetBinaryOperator() + "'.",
+        binaryExpression->GetLocation());
     return;
   }
   llvm::Value *leftHandSide = lastResult;
 
   binaryExpression->GetRHS()->Visit(*this);
   if (lastResult == nullptr) {
-    LogError(std::string("Invalid right-hand side for binary expression for operator '") + *binaryExpression->GetBinaryOperator() + "'.",
-             binaryExpression->GetLocation());
+    LogError(
+        std::string(
+            "Invalid right-hand side for binary expression for operator '") +
+            *binaryExpression->GetBinaryOperator() + "'.",
+        binaryExpression->GetLocation());
     return;
   }
   llvm::Value *rightHandSide = lastResult;
@@ -409,7 +423,8 @@ llvm::Function *CodegenVisitor::FindFunction(std::string *name) {
   return FindOrDeclareBuiltinFunction(name);
 }
 
-void CodegenVisitor::LogError(const std::string &error, TokenLocation location) {
+void CodegenVisitor::LogError(const std::string &error,
+                              TokenLocation location) {
   std::cerr << "{ Line : " << location.GetLine()
             << " Position : " << location.GetColumn() << " } " << error << '\n';
 }

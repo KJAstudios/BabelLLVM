@@ -15,7 +15,7 @@ DebugInfo::DebugInfo(std::string &inputFileName, llvm::Module &module)
     : dwarfBuilder(std::make_unique<llvm::DIBuilder>(module)),
       fileName(inputFileName),
       compileUnit(dwarfBuilder->createCompileUnit(
-          BabelLanguageCode, dwarfBuilder->createFile(inputFileName, "."),
+          llvm::dwarf::DW_LANG_C, dwarfBuilder->createFile(inputFileName, "."),
           "Babel Compiler", false, "", 0)),
       Unit(dwarfBuilder->createFile(compileUnit->getFilename(),
                                     compileUnit->getDirectory())),
@@ -41,6 +41,18 @@ void DebugInfo::DeclareArgument(llvm::Argument &argument,
   llvm::DILocalVariable *localVariable = dwarfBuilder->createParameterVariable(
       lexicalBlocks.back(), argument.getName(), argumentIndex, Unit, lineNumber,
       GetIntType(), true);
+  dwarfBuilder->insertDeclare(
+      alloca, localVariable, dwarfBuilder->createExpression(),
+      llvm::DILocation::get(lexicalBlocks.back()->getContext(), lineNumber, 0,
+                            lexicalBlocks.back()),
+      builder.GetInsertBlock());
+}
+
+void DebugInfo::DeclareVariable(const std::string &variableName,
+                                llvm::AllocaInst *alloca, int lineNumber,
+                                llvm::IRBuilder<> &builder) {
+  llvm::DILocalVariable *localVariable = dwarfBuilder->createAutoVariable(
+      lexicalBlocks.back(), variableName, Unit, lineNumber, GetIntType(), true);
   dwarfBuilder->insertDeclare(
       alloca, localVariable, dwarfBuilder->createExpression(),
       llvm::DILocation::get(lexicalBlocks.back()->getContext(), lineNumber, 0,

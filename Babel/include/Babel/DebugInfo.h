@@ -30,6 +30,9 @@ public:
   void DeclareArgument(llvm::Argument &argument, llvm::AllocaInst *alloca,
                        unsigned argumentIndex, int lineNumber,
                        llvm::IRBuilder<> &builder);
+  void DeclareVariable(const std::string &variableName,
+                       llvm::AllocaInst *alloca, int lineNumber,
+                       llvm::IRBuilder<> &builder);
   llvm::DIType *GetIntType();
   llvm::DIBuilder *GetDwarfBuilder();
   void EmitLocation(llvm::IRBuilder<> &builder);
