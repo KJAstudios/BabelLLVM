@@ -1,7 +1,7 @@
 #ifndef TOKENDATA_H
 #define TOKENDATA_H
 #include "Babel/Token.h"
-#include <llvm-20/llvm/ADT/StringRef.h>
+#include <llvm/ADT/StringRef.h>
 namespace Babel {
 struct TokenLocation {
 private:

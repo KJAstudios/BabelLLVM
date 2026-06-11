@@ -1,8 +1,8 @@
 #ifndef BABELARGS_H
 #define BABELARGS_H
 #include <iostream>
-#include <llvm-20/llvm/TargetParser/Host.h>
-#include <llvm-20/llvm/TargetParser/Triple.h>
+#include <llvm/TargetParser/Host.h>
+#include <llvm/TargetParser/Triple.h>
 #include <string>
 namespace Babel {
 struct BabelArgs {

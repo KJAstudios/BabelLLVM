@@ -1,7 +1,7 @@
 #include "Babel/ArgumentParser.h"
 #include "Babel/BabelArgs.h"
 #include <filesystem>
-#include <llvm-20/llvm/TargetParser/Triple.h>
+#include <llvm/TargetParser/Triple.h>
 #include <string>
 namespace Babel {
   BabelArgs Babel::ArgumentParser::babelArgs = {};
