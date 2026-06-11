@@ -2,8 +2,9 @@
 #include "Babel/AbstractSyntaxTree.h"
 #include "Babel/BabelArgs.h"
 #include "Babel/CodegenVisitor.h"
+#include "Babel/DebugInfo.h"
 #include "Babel/Parser.h"
-#include <llvm-20/llvm/IR/Function.h>
+#include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/LegacyPassManager.h>
@@ -24,16 +25,22 @@ Babel::Babel() {
   context = std::make_unique<llvm::LLVMContext>();
   module = std::make_unique<llvm::Module>("Babel", *context);
   IRBuilder = std::make_unique<llvm::IRBuilder<>>(*context);
-  codegenVisitor = std::make_unique<CodegenVisitor>(
-      context.get(), IRBuilder.get(), module.get());
+  codegenVisitor =
+      std::make_unique<CodegenVisitor>(*context, *IRBuilder, *module);
 };
 
 int Babel::Run(BabelArgs &args) {
+  std::string fileName = *args.GetInputFile();
+  debugInfo = std::make_unique<DebugInfo>(fileName, *module);
+  codegenVisitor->AttachDebugInfo(debugInfo.get());
   parser = std::make_unique<Parser>(args.GetInputFile());
   std::unique_ptr<ProgramAST> program = parser->Parse();
   program->Visit(*codegenVisitor);
-  module->print(llvm::errs(), nullptr);
-  if(!DoesMainExist()){
+  // finalize the debug info once the IR is generated
+  debugInfo->GetDwarfBuilder()->finalize();
+  // uncomment to dump IR into console
+  // module->print(llvm::errs(), nullptr);
+  if (!DoesMainExist()) {
     std::cerr << "主要的 function does not exist";
     return 1;
   }
@@ -41,7 +48,7 @@ int Babel::Run(BabelArgs &args) {
   return 0;
 }
 
-bool Babel::DoesMainExist(){
+bool Babel::DoesMainExist() {
   llvm::Function *mainFunction = module->getFunction("main");
   return mainFunction != nullptr;
 }
@@ -84,8 +91,8 @@ int Babel::OutputObjectFile(std::string *fileName) {
   std::error_code errorCode;
   llvm::raw_fd_ostream destination(outputFile, errorCode);
   if (errorCode) {
-    llvm::errs() << "Could not create or open output object file " << outputFile << ": "
-                 << errorCode.message() << "\n";
+    llvm::errs() << "Could not create or open output object file " << outputFile
+                 << ": " << errorCode.message() << "\n";
     return 1;
   }
 
@@ -97,7 +104,6 @@ int Babel::OutputObjectFile(std::string *fileName) {
   }
   passManager.run(*module);
   destination.flush();
-  llvm::errs() << "object file written to " << outputFile << '\n';
   return 0;
 }
 } // namespace Babel

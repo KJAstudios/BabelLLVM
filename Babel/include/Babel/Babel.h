@@ -1,13 +1,13 @@
 #ifndef BABEL_H
 #define BABEL_H
-#include "CodegenVisitor.h"
+#include "Babel/DebugInfo.h"
 #include "Babel/Parser.h"
-#include <memory>
-#include <llvm/IR/IRBuilder.h>
 #include "BabelArgs.h"
+#include "CodegenVisitor.h"
+#include <llvm/IR/IRBuilder.h>
+#include <memory>
+
 namespace Babel {
-
-
 class Babel {
 private:
   std::unique_ptr<llvm::LLVMContext> context;
@@ -15,15 +15,15 @@ private:
   std::unique_ptr<llvm::IRBuilder<>> IRBuilder;
   std::unique_ptr<Parser> parser;
   std::unique_ptr<CodegenVisitor> codegenVisitor;
+  std::unique_ptr<DebugInfo> debugInfo;
 
 public:
-	Babel();
-	int Run(BabelArgs &args);
-  int OutputObjectFile(std::string* fileName);
+  Babel();
+  int Run(BabelArgs &args);
+  int OutputObjectFile(std::string *fileName);
 
 private:
   bool DoesMainExist();
-  
 };
 } // namespace Babel
 #endif

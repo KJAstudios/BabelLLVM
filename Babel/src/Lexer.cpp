@@ -1,5 +1,6 @@
 #include "Babel/Lexer.h"
 #include "Babel/Token.h"
+#include "Babel/TokenData.h"
 
 #include <llvm/ADT/StringRef.h>
 
@@ -41,10 +42,9 @@ void Lexer::ReadFromSTDIN() {
   stringCodeBuffer = rawMemoryBuffer->getBuffer();
 }
 
-Babel::Token Lexer::GetNextToken() {
+Babel::TokenData Lexer::GetNextToken() {
   if (stringCodeBuffer.empty()) {
-    std::cerr << "Buffer is empty\n";
-    return Token::tok_eof;
+    return {llvm::StringRef(), Token::tok_eof};
   }
 
   offset = 0;
@@ -55,6 +55,12 @@ Babel::Token Lexer::GetNextToken() {
     unsigned charSize = GetCharSize(stringCodeBuffer[offset]);
     llvm::StringRef nextChar =
         llvm::StringRef(stringCodeBuffer.data() + offset, charSize);
+
+    column++;
+    if (charSize == 1 && (nextChar.str() == "\n" || nextChar.str() == "\r")) {
+      line++;
+      column = 0;
+    }
 
     // if it's a comment, skip the entire line
     if (nextChar.str() == "✎") {
@@ -93,7 +99,7 @@ Babel::Token Lexer::GetNextToken() {
 
   // if we reach the end of the buffer, we're at the end of the file/input
   std::cerr << "End of file reached\n";
-  return Token::tok_eof;
+  return {llvm::StringRef(), Token::tok_eof};
 }
 
 void Lexer::SkipComment() {
@@ -103,7 +109,7 @@ void Lexer::SkipComment() {
   }
 }
 
-Babel::Token Lexer::LexNumberToken() {
+Babel::TokenData Lexer::LexNumberToken() {
 
   int dotCount = 0;
 
@@ -120,20 +126,24 @@ Babel::Token Lexer::LexNumberToken() {
 
       if (IsControlCharacter(unicodeChar) || IsOperatorCharacter(unicodeChar)) {
         // valid end of number, return a number token
-        numberStr = llvm::StringRef(stringCodeBuffer.data(), offset);
+        TokenData token =
+            TokenData(llvm::StringRef(stringCodeBuffer.data(), offset),
+                      Token::tok_number, line, column);
         stringCodeBuffer = stringCodeBuffer.drop_front(offset + 1);
-        return Token::tok_number;
+        return token;
       }
 
       std::cerr << "Invalid character in number\n";
-      return Token::tok_error;
+      return {llvm::StringRef(), Token::tok_error};
     }
 
     // if we encounter whitespace, the number token has ended
     if (IsWhitespaceCharacter(curChar)) {
-      numberStr = llvm::StringRef(stringCodeBuffer.data(), offset);
+      TokenData token =
+          TokenData(llvm::StringRef(stringCodeBuffer.data(), offset),
+                    Token::tok_number, line, column);
       stringCodeBuffer = stringCodeBuffer.drop_front(offset + 1);
-      return Token::tok_number;
+      return token;
     }
 
     // if we encounter a dot, it's either a decimal point or an invalid
@@ -141,7 +151,7 @@ Babel::Token Lexer::LexNumberToken() {
     if (curChar == '.') {
       if (dotCount > 1) {
         std::cerr << "Invalid number format\n";
-        return Token::tok_error;
+        return {llvm::StringRef(), Token::tok_error};
       }
 
       dotCount++;
@@ -152,7 +162,7 @@ Babel::Token Lexer::LexNumberToken() {
     // if the character isn't a digit, it's an invalid character in the number
     if (isdigit(curChar) == 0) {
       std::cerr << "Invalid character in number\n";
-      return Token::tok_error;
+      return {llvm::StringRef(), Token::tok_error};
     }
 
     // if it's a valid digit, move to the next character
@@ -160,10 +170,10 @@ Babel::Token Lexer::LexNumberToken() {
   }
   // if the end of the buffer is reached, that means the file ended without a
   // valid end to the number token
-  return Token::tok_eof;
+  return {llvm::StringRef(), Token::tok_eof};
 }
 
-Babel::Token Lexer::LexWhitespaceTerminatedToken(unsigned charSize) {
+Babel::TokenData Lexer::LexWhitespaceTerminatedToken(unsigned charSize) {
   bool isWhitespaceCharacter = IsWhitespaceCharacter(stringCodeBuffer[offset]);
   if (offset == 0) {
     if (isWhitespaceCharacter) {
@@ -179,17 +189,18 @@ Babel::Token Lexer::LexWhitespaceTerminatedToken(unsigned charSize) {
   }
 
   std::cerr << "Invalid whitespace character\n";
-  return Token::tok_error;
+  return {llvm::StringRef(), Token::tok_error};
 }
 
-Babel::Token Lexer::LexControlCharTerminatedToken(unsigned charSize,
-                                                  llvm::StringRef nextChar) {
+Babel::TokenData
+Lexer::LexControlCharTerminatedToken(unsigned charSize,
+                                     llvm::StringRef nextChar) {
 
   // if the first character is a control character, it's a control token
   if (offset == 0) {
-    controlCharacter = nextChar;
+    TokenData token = TokenData(nextChar, Token::tok_control, line, column);
     stringCodeBuffer = stringCodeBuffer.drop_front(charSize);
-    return Token::tok_control;
+    return token;
   }
 
   // else it's an identifier found before the control character
@@ -199,13 +210,14 @@ Babel::Token Lexer::LexControlCharTerminatedToken(unsigned charSize,
   return GetTokIdentifierOrKeyword(token);
 }
 
-Babel::Token Lexer::LexOperatorTerminatedToken(unsigned charSize,
-                                               llvm::StringRef nextChar) {
+Babel::TokenData Lexer::LexOperatorTerminatedToken(unsigned charSize,
+                                                   llvm::StringRef nextChar) {
   // if the first character is an operator, it's an operator token
   if (offset == 0) {
-    operatorStr = nextChar;
+    TokenData tokenData =
+        TokenData(nextChar, Token::tok_operator, line, column);
     stringCodeBuffer = stringCodeBuffer.drop_front(charSize);
-    return Token::tok_operator;
+    return tokenData;
   }
 
   // else it's an identifier found before the operator
@@ -214,29 +226,28 @@ Babel::Token Lexer::LexOperatorTerminatedToken(unsigned charSize,
   return GetTokIdentifierOrKeyword(token);
 }
 
-Babel::Token Lexer::GetTokIdentifierOrKeyword(llvm::StringRef identifier) {
+Babel::TokenData Lexer::GetTokIdentifierOrKeyword(llvm::StringRef identifier) {
 
   if (identifier.str() == "əgər") {
-    return Token::tok_if;
+    return {identifier, Token::tok_if, line, column};
   }
   if (identifier.str() == "それ以外") {
-    return Token::tok_else;
+    return {identifier, Token::tok_else, line, column};
   }
   if (identifier.str() == "ለ") {
-    return Token::tok_for;
+    return {identifier, Token::tok_for, line, column};
   }
   if (identifier.str() == "yekjimar") {
-    return Token::tok_int;
+    return {identifier, Token::tok_int, line, column};
   }
   if (identifier.str() == "kaksinkertainen") {
-    return Token::tok_double;
+    return {identifier, Token::tok_double, line, column};
   }
   if (identifier.str() == "funkcjonować") {
-    return Token::tok_function;
+    return {identifier, Token::tok_function, line, column};
   }
 
-  identifierStr = identifier;
-  return Token::tok_identifier;
+  return {identifier, Token::tok_identifier, line, column};
 }
 
 // Get the size of the unicode character at the current pointer
