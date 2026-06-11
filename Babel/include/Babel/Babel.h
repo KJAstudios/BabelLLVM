@@ -21,7 +21,7 @@ private:
 
 public:
   Babel();
-  int SetupModuleForTarget(std::string targetTriple);
+  int SetupModuleForTarget(std::string &targetTriple);
   int Run(BabelArgs &args);
   int OutputObjectFile(std::string &fileName);
 

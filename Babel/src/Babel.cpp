@@ -30,18 +30,14 @@ Babel::Babel() {
       std::make_unique<CodegenVisitor>(*context, *IRBuilder, *module);
 };
 
-int Babel::SetupModuleForTarget(std::string targetTriple) {
+int Babel::SetupModuleForTarget(std::string &targetTriple) {
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
   llvm::InitializeAllTargetMCs();
   llvm::InitializeAllAsmParsers();
   llvm::InitializeAllAsmPrinters();
 
-  // get the target triple data
-  if (targetTriple.empty()) {
-    targetTriple = llvm::sys::getDefaultTargetTriple();
-  }
-  targetTriple = llvm::Triple::normalize(targetTriple);
+  module->setTargetTriple(targetTriple);
 
   std::string error;
 
@@ -58,7 +54,6 @@ int Babel::SetupModuleForTarget(std::string targetTriple) {
       target->createTargetMachine(targetTriple, "generic", "", options, {}));
 
   // set the data layout
-  module->setTargetTriple(targetTriple);
   module->setDataLayout(targetMachine->createDataLayout());
   return 0;
 }

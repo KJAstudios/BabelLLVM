@@ -6,13 +6,17 @@
 namespace Babel {
 class ArgumentParser {
 private:
-	static BabelArgs babelArgs;
+  static BabelArgs babelArgs;
+  
+
 public:
-  static BabelArgs ParseArgs(std::vector<std::string> &args);
+   static BabelArgs ParseArgs(std::vector<std::string> &args);
+
 private:
-void ParseTarget(std::string &target);
-void ParseSysRoot(std::string &sysroot);
-static bool IsValidBabelFileName(const std::string &fileName);
+  
+   static bool IsValidBabelFileName(const std::string &fileName);
+   static bool ParseDoubleArg(std::pair<std::string, std::string> doubleArg);
+   static bool ParseSingleArg(std::string arg);
 };
 } // namespace Babel
 #endif
