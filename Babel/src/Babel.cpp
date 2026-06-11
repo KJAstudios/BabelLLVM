@@ -4,6 +4,7 @@
 #include "Babel/CodegenVisitor.h"
 #include "Babel/DebugInfo.h"
 #include "Babel/Parser.h"
+#include <llvm-20/llvm/TargetParser/Triple.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
@@ -29,11 +30,44 @@ Babel::Babel() {
       std::make_unique<CodegenVisitor>(*context, *IRBuilder, *module);
 };
 
+int Babel::SetupModuleForTarget(std::string targetTriple) {
+  llvm::InitializeAllTargetInfos();
+  llvm::InitializeAllTargets();
+  llvm::InitializeAllTargetMCs();
+  llvm::InitializeAllAsmParsers();
+  llvm::InitializeAllAsmPrinters();
+
+  // get the target triple data
+  if (targetTriple.empty()) {
+    targetTriple = llvm::sys::getDefaultTargetTriple();
+  }
+  targetTriple = llvm::Triple::normalize(targetTriple);
+
+  std::string error;
+
+  const llvm::Target *target =
+      llvm::TargetRegistry::lookupTarget(targetTriple, error);
+  if (target == nullptr) {
+    std::cerr << "Failed to find requested build target: " << error << '\n';
+    return 1;
+  }
+
+  // create the target machine
+  llvm::TargetOptions options;
+  targetMachine = std::unique_ptr<llvm::TargetMachine>(
+      target->createTargetMachine(targetTriple, "generic", "", options, {}));
+
+  // set the data layout
+  module->setTargetTriple(targetTriple);
+  module->setDataLayout(targetMachine->createDataLayout());
+  return 0;
+}
+
 int Babel::Run(BabelArgs &args) {
-  std::string fileName = *args.GetInputFile();
+  std::string fileName = args.GetInputFile();
   debugInfo = std::make_unique<DebugInfo>(fileName, *module);
   codegenVisitor->AttachDebugInfo(debugInfo.get());
-  parser = std::make_unique<Parser>(args.GetInputFile());
+  parser = std::make_unique<Parser>(&args.GetInputFile());
   std::unique_ptr<ProgramAST> program = parser->Parse();
   program->Visit(*codegenVisitor);
   // finalize the debug info once the IR is generated
@@ -53,31 +87,7 @@ bool Babel::DoesMainExist() {
   return mainFunction != nullptr;
 }
 
-int Babel::OutputObjectFile(std::string *fileName) {
-  llvm::InitializeAllTargetInfos();
-  llvm::InitializeAllTargets();
-  llvm::InitializeAllTargetMCs();
-  llvm::InitializeAllAsmParsers();
-  llvm::InitializeAllAsmPrinters();
-
-  // get the target triple data
-  auto targetTriple = llvm::sys::getDefaultTargetTriple();
-
-  std::string error;
-  const llvm::Target *target =
-      llvm::TargetRegistry::lookupTarget(targetTriple, error);
-  if (target == nullptr) {
-    std::cerr << "Failed to find requested build target: " << error << '\n';
-    return 1;
-  }
-
-  // create the target machine
-  llvm::TargetOptions options;
-  llvm::TargetMachine *targetMachine =
-      target->createTargetMachine(targetTriple, "generic", "", options, {});
-
-  // set the data layout
-  module->setDataLayout(targetMachine->createDataLayout());
+int Babel::OutputObjectFile(std::string &fileName) {
 
   std::string validationError;
   llvm::raw_string_ostream errorStream(validationError);
@@ -87,11 +97,10 @@ int Babel::OutputObjectFile(std::string *fileName) {
   }
 
   // emit to file
-  std::string outputFile = *fileName;
   std::error_code errorCode;
-  llvm::raw_fd_ostream destination(outputFile, errorCode);
+  llvm::raw_fd_ostream destination(fileName, errorCode);
   if (errorCode) {
-    llvm::errs() << "Could not create or open output object file " << outputFile
+    llvm::errs() << "Could not create or open output object file " << fileName
                  << ": " << errorCode.message() << "\n";
     return 1;
   }

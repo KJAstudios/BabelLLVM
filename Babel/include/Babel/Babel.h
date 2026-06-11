@@ -4,6 +4,7 @@
 #include "Babel/Parser.h"
 #include "BabelArgs.h"
 #include "CodegenVisitor.h"
+#include <llvm/Target/TargetMachine.h>
 #include <llvm/IR/IRBuilder.h>
 #include <memory>
 
@@ -16,11 +17,13 @@ private:
   std::unique_ptr<Parser> parser;
   std::unique_ptr<CodegenVisitor> codegenVisitor;
   std::unique_ptr<DebugInfo> debugInfo;
+  std::unique_ptr<llvm::TargetMachine> targetMachine;
 
 public:
   Babel();
+  int SetupModuleForTarget(std::string targetTriple);
   int Run(BabelArgs &args);
-  int OutputObjectFile(std::string *fileName);
+  int OutputObjectFile(std::string &fileName);
 
 private:
   bool DoesMainExist();

@@ -7,24 +7,29 @@ struct BabelArgs {
 private:
   std::string inputFile;
   std::string outputFile;
+  std::string targetTriple;
   bool objectFileOnly = false;
   bool argError = false;
 
 public:
-  void SetInputFile(std::string fileName) { inputFile = fileName; }
+  void SetInputFile(std::string &fileName) { inputFile = fileName; }
 
-  std::string *GetInputFile() { return &inputFile; }
+  std::string &GetInputFile() { return inputFile; }
 
-  void SetOutputFile(std::string fileName) { outputFile = fileName; }
+  void SetOutputFile(std::string &fileName) { outputFile = fileName; }
 
-  std::string *GetOutputFile() { return &outputFile; }
+  std::string &GetOutputFile() { return outputFile; }
+
+  void SetTargetTriple(std::string &target) { targetTriple = target; }
+
+  std::string &GetTargetTriple() { return targetTriple; }
 
   void SetObjectFileOnly() { objectFileOnly = true; }
-  bool GetObjectFileOnlyStatus() { return objectFileOnly; }
+  bool GetObjectFileOnlyStatus() const { return objectFileOnly; }
 
   void SetError() { argError = true; }
 
-  bool HasError() { return argError; }
+  bool HasError() const { return argError; }
 
   void Validate() {
     if (inputFile.empty()) {
