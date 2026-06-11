@@ -37,6 +37,7 @@ jobs:
         cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++"
 
     - name: Build
+      working-directory: Babel
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       run: cmake --build build --parallel
       
@@ -56,4 +57,5 @@ jobs:
             -DLLVM_DIR="C:/Program Files/LLVM/lib/cmake/llvm"
 
       - name: Build
+        working-directory: Babel
         run: cmake --build build --config Release --parallel
