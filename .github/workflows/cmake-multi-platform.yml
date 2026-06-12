@@ -67,10 +67,21 @@ jobs:
       - name: Install LLVM 20
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         run: |
+          Write-Host "Downloading LLVM..."
           $url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.6/clang+llvm-20.1.6-x86_64-pc-windows-msvc.tar.xz"
           Invoke-WebRequest -Uri $url -OutFile "llvm.tar.xz"
+          
+          Write-Host "Download complete, file size:"
+          (Get-Item "llvm.tar.xz").Length
+          
+          Write-Host "Extracting..."
           tar -xf llvm.tar.xz
-          Move-Item "clang+llvm-20.1.6-x86_64-pc-windows-msvc" "C:/LLVM"     
+          
+          Write-Host "Current directory contents:"
+          Get-ChildItem
+          
+          Write-Host "Looking for extracted folder:"
+          Get-ChildItem -Filter "clang*"   
 
       - name: Configure CMake
         working-directory: Babel
