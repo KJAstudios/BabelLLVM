@@ -20,7 +20,7 @@ The idea behind the language is that it should mostly look like average code, bu
 ## Character Map
 
 | Standard | Babel | Usage |
-|----------|-------|
+|----------|-------|-------|
 | `(` `)` | `⟅` `⟆` | Grouping / Call Arguments |
 | `{` `}` | `꧁` `꧂` | Block Delimiters |
 | `+` | `⊕` | Addition |
