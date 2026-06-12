@@ -26,15 +26,23 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install LLVM Dependencies
+    - name: Add LLVM apt repository
       run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential ninja-build cmake ccache llvm-dev
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-20 main"
+          sudo apt-get update
+
+    - name: Install dependencies
+      run: | 
+        sudo apt-get install -y build-essential ninja-build cmake ccache llvm-20-dev
 
     - name: Configure CMake
       working-directory: Babel
       run: |
-        cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++"
+        cmake -B build -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DLLVM_DIR=/usr/lib/llvm-20/lib/cmake/llvm \
+        -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++"
 
     - name: Build
       working-directory: Babel
@@ -45,16 +53,17 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install LLVM
-        run: choco install llvm --version=20.1.0 -y
+      
+      - name: Install LLVM 20
+        run: choco install llvm --version=20.1.0 --allow-downgrade --force -y
+        
+      - name: Add LLVM to PATH
+        run: echo "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Configure CMake
         working-directory: Babel
         run: |
-          cmake -B build -G "Visual Studio 17 2022" \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DLLVM_DIR="C:/Program Files/LLVM/lib/cmake/llvm"
+          cmake -B build -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release -DLLVM_DIR="C:/Program Files/LLVM/lib/cmake/llvm"
 
       - name: Build
         working-directory: Babel
