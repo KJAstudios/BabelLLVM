@@ -19,46 +19,62 @@ The idea behind the language is that it should mostly look like average code, bu
 
 ## Character Map
 
-| Standard | Babel |
+| Standard | Babel | Usage |
 |----------|-------|
-| `(` `)` | `⟅` `⟆` |
-| `{` `}` | `꧁` `꧂` |
-| `+` | `⊕` |
-| `-` | `⊖` |
-| `*` | `×` |
-| `/` | `÷` |
-| `<` | `≻` |
-| `>` | `≺` |
-| `=` | `≔` |
-| `,` | `᨞` |
+| `(` `)` | `⟅` `⟆` | Grouping / Call Arguments |
+| `{` `}` | `꧁` `꧂` | Block Delimiters |
+| `+` | `⊕` | Addition |
+| `-` | `⊖` | Subtraction |
+| `*` | `×` | Multiplication |
+| `/` | `÷` |  Division |
+| `<` | `≺` | Less Than |
+| `>` | `≻` | Greater Than |
+| `=` | `≔` | Assignment  |
+| `,` | `᨞` | Function Argument Delimiter |
+| `~` | Statement terminator |
 
 ---
 
 ## Syntax
+
+### Statements
+
+Each statement must end with `~`.
+```x ≔ 1 ⊕ 1~```
 
 ### Functions
 
 Functions are declared in the format `function (args) FunctionName {}`. The main function **must** be named `主要的`.
 
 **Main function declaration:**
-funkcjonować ⟅⟆ 主要的꧁꧂
-
-### Statements
-
-Each statement line must end with `~`.
+```
+funkcjonować ⟅⟆ 主要的꧁
+...
+꧂
+```
 
 ### Assignment
 
-No types are currently required, and standard math rules apply:
-x ≔ 1 ⊕ 1~
+Only integers are supported. Assignment uses `≔`:
+`x ≔ 42~`
 
 ### If / Else
 
-If/Else statements follow standard C-style conventions with the substituted symbols:
+```
 əgər⟅x ≺ y⟆꧁
 ꧂
 それ以外꧁
 ꧂
+```
+
+### Print
+
+'tisk' writes the variable or value to the standard output:
+```
+tisk⟅x⟆~
+```
+
+> **Note:** Loops, return values, and comments are not yet defined.
 
 ---
 
@@ -73,4 +89,6 @@ funkcjonować ⟅⟆ 主要的꧁
   それ以外꧁
     tisk⟅y⟆~
   ꧂
-꧂```
+꧂
+```
+This prints `2` if `x < y`, otherwise prints `1`.
