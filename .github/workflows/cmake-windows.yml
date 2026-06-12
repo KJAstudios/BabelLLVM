@@ -35,7 +35,7 @@ jobs:
       - name: Build LLVM
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         run: |
-          cmake -S llvm-project/llvm -B llvm-build -G "Visual Studio 17 2022" `
+          cmake -S llvm-project/llvm -B llvm-build -G Ninja `
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_INSTALL_PREFIX="C:/LLVM" `
             -DLLVM_TARGETS_TO_BUILD="X86;AArch64" `
