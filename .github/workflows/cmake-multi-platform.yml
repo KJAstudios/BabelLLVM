@@ -53,6 +53,9 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Remove Chocolatey LLVM
+        run: choco uninstall llvm -y
       
       - name: Cache LLVM
         id: cache-llvm
