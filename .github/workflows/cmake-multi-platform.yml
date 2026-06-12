@@ -54,11 +54,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Debug LLVM
-        run: |
-          Get-ChildItem -Recurse -Filter "LLVMConfig.cmake" "C:/" -ErrorAction SilentlyContinue
-          llvm-config --version
-          llvm-config --cmakedir
+      - name: Install LLVM 20
+        run: choco install llvm --version=20.1.0 --allow-downgrade --force -y
 
       - name: Configure CMake
         working-directory: Babel
