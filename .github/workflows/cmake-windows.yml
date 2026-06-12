@@ -22,7 +22,7 @@ jobs:
           key: llvm-20.1.6-windows-x64-v1
 
       - name: Checkout LLVM
-        if: always() && steps.cache-llvm.outputs.cache-hit != 'true'
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
           repository: llvm/llvm-project
@@ -31,13 +31,6 @@ jobs:
           sparse-checkout: |
             llvm
             cmake
-
-      - name: Save LLVM cache
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: C:/LLVM
-          key: llvm-20.1.6-windows-x64-v1
 
       - name: Build LLVM
         if: steps.cache-llvm.outputs.cache-hit != 'true'
@@ -53,6 +46,14 @@ jobs:
             -DLLVM_INCLUDE_DOCS=OFF
           cmake --build llvm-build --config Release --parallel
           cmake --install llvm-build --config Release
+
+
+      - name: Save LLVM cache
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: C:/LLVM
+          key: llvm-20.1.6-windows-x64-v1
 
       - name: Configure CMake
         working-directory: Babel
