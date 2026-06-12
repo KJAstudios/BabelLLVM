@@ -59,11 +59,6 @@ jobs:
         
       - name: Add LLVM to PATH
         run: echo "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-        
-      - name: Debug LLVM
-        run: |
-          llvm-config --version
-          llvm-config --cmakedir
 
       - name: Configure CMake
         working-directory: Babel
