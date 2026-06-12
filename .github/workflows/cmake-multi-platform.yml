@@ -54,9 +54,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install LLVM
-        run: choco install llvm --version=20.1.0 -y
-
       - name: Configure CMake
         working-directory: Babel
         run: |
