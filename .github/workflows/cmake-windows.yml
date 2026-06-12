@@ -16,14 +16,13 @@ jobs:
 
       - name: Cache LLVM build
         id: cache-llvm
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: C:/LLVM
           key: llvm-20.1.6-windows-x64-v1
-          save-always: true
 
       - name: Checkout LLVM
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        if: always() && steps.cache-llvm.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
           repository: llvm/llvm-project
@@ -32,6 +31,13 @@ jobs:
           sparse-checkout: |
             llvm
             cmake
+
+      - name: Save LLVM cache
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: C:/LLVM
+          key: llvm-20.1.6-windows-x64-v1
 
       - name: Build LLVM
         if: steps.cache-llvm.outputs.cache-hit != 'true'
