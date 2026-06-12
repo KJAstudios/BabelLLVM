@@ -31,7 +31,7 @@ The idea behind the language is that it should mostly look like average code, bu
 | `>` | `≻` | Greater Than |
 | `=` | `≔` | Assignment  |
 | `,` | `᨞` | Function Argument Delimiter |
-| `~` | Statement terminator |
+| `;` | `~` | Statement terminator |
 
 ---
 
