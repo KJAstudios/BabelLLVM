@@ -57,9 +57,7 @@ jobs:
       - name: Configure CMake
         working-directory: Babel
         run: |
-          cmake -B build -G "Visual Studio 17 2022" \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DLLVM_DIR="C:/Program Files/LLVM/lib/cmake/llvm"
+          cmake -B build -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release -DLLVM_DIR="C:/Program Files/LLVM/lib/cmake/llvm"
 
       - name: Build
         working-directory: Babel
