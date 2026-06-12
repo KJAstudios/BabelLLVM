@@ -53,6 +53,12 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Debug LLVM
+        run: |
+          Get-ChildItem -Recurse -Filter "LLVMConfig.cmake" "C:/" -ErrorAction SilentlyContinue
+          llvm-config --version
+          llvm-config --cmakedir
 
       - name: Configure CMake
         working-directory: Babel
