@@ -56,6 +56,11 @@ jobs:
       
       - name: Install LLVM 20
         run: choco install llvm --version=20.1.0 --allow-downgrade --force -y
+        
+      - name: Debug LLVM
+        run: |
+          llvm-config --version
+          llvm-config --cmakedir
 
       - name: Configure CMake
         working-directory: Babel
