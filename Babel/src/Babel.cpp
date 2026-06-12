@@ -4,7 +4,7 @@
 #include "Babel/CodegenVisitor.h"
 #include "Babel/DebugInfo.h"
 #include "Babel/Parser.h"
-#include <llvm-20/llvm/TargetParser/Triple.h>
+#include <llvm/TargetParser/Triple.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
