@@ -1,6 +1,6 @@
 # This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
 # See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
-name: CMake on a single platform
+name: CMake for Windows
 
 on:
   push:
@@ -52,8 +52,6 @@ jobs:
         working-directory: Babel
         run: cmake -B build -G Ninja `
           -DCMAKE_BUILD_TYPE=Release `
-          -DCMAKE_C_COMPILER="C:/LLVM/bin/clang-cl.exe" `
-          -DCMAKE_CXX_COMPILER="C:/LLVM/bin/clang-cl.exe" `
           -DLLVM_DIR="C:/LLVM/lib/cmake/llvm"
 
       - name: Build
