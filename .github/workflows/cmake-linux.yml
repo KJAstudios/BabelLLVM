@@ -48,19 +48,24 @@ jobs:
       working-directory: Babel
       run: cmake --build build --parallel 
 
+    - name: Debug output
+      run: |
+        echo "=== Babel/build contents ==="
+        find Babel/build -type f -name "babel-llvm"
+        echo "=== Babel/staging contents ==="
+        find Babel/staging -type f 2>/dev/null || echo "staging not found"
+
     - name: Install
       working-directory: Babel
       run: cmake --install build --prefix staging
 
     - name: Package
       working-directory: Babel
-      run: zip -r ../../babel-linux-${{ matrix.arch }}.zip staging/
+      run: zip -r ../babel-linux-${{ matrix.arch }}.zip staging/
+
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: babel-linux-${{ matrix.arch }}
         path: babel-linux-${{ matrix.arch }}.zip
-
-    - name: Debug output
-      run: find . -name "*.zip" 2>/dev/null

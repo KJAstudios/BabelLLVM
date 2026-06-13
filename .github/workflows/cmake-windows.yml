@@ -65,13 +65,20 @@ jobs:
         working-directory: Babel
         run: cmake --build build --parallel
 
+      - name: Debug output
+        run: |
+          Write-Host "=== Babel/build contents ==="
+          Get-ChildItem -Recurse "Babel/build" -Filter "babel-llvm.exe" -ErrorAction SilentlyContinue
+          Write-Host "=== Babel/staging contents ==="
+          if (Test-Path "Babel/staging") { Get-ChildItem -Recurse "Babel/staging" } else { Write-Host "staging not found" }
+
       - name: Install
         working-directory: Babel
         run: cmake --install build --prefix staging
 
       - name: Package
         working-directory: Babel
-        run: Compress-Archive -Path staging/* -DestinationPath ../../babel-windows-x64.zip
+        run: Compress-Archive -Path staging/* -DestinationPath ../babel-windows-x64.zip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -79,6 +86,5 @@ jobs:
           name: babel-windows-x64
           path: babel-windows-x64.zip
 
-      - name: Debug output
-        run: Get-ChildItem -Recurse "Babel/staging"
+      
 
