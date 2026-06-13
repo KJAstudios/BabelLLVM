@@ -46,5 +46,18 @@ jobs:
 
     - name: Build
       working-directory: Babel
-      # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       run: cmake --build build --parallel 
+
+    - name: Install
+      working-directory: Babel
+      run: cmake --install build --prefix staging
+
+    - name: Package
+      working-directory: Babel
+      run: zip -r ../../babel-linux-${{ matrix.arch }}.zip staging/
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: babel-linux-${{ matrix.arch }}
+        path: babel-linux-${{ matrix.arch }}.zip

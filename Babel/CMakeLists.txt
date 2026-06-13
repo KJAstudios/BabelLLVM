@@ -41,3 +41,13 @@ target_link_libraries(babel-llvm PRIVATE ${LLVM_LIBS})
 if(UNIX)
     target_link_options(babel-llvm PRIVATE ${LLVM_LD_FLAGS} -rdynamic)
 endif()
+
+# Install the executable
+install(TARGETS babel-llvm
+    RUNTIME DESTINATION .
+)
+
+# Install packaged files
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/../Packaged Files/"
+    DESTINATION .
+)

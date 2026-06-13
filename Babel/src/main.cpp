@@ -9,6 +9,14 @@
 
 namespace {
 
+std::string GetLibraryFilePath() {
+  if (llvm::sys::fs::exists("runtime.bc")) {
+    return "runtime.bc";
+  }
+
+  return "dependencies/runtime.bc";
+}
+
 void RunLinker(Babel::BabelArgs babelArgs, std::string &objectFilePath) {
   std::string clangPath = llvm::sys::findProgramByName("clang").get();
 
@@ -16,10 +24,15 @@ void RunLinker(Babel::BabelArgs babelArgs, std::string &objectFilePath) {
     std::cerr << "Babel Runtime Library not found";
     return;
   }
+  std::string libraryFilePath = GetLibraryFilePath();
   std::string target;
   std::string sysroot;
-  std::vector<llvm::StringRef> args = {clangPath, objectFilePath, "runtime.bc",
-                                       "-o", babelArgs.GetOutputFile(),  "-Wno-override-module"};
+  std::vector<llvm::StringRef> args = {clangPath,
+                                       objectFilePath,
+                                       libraryFilePath,
+                                       "-o",
+                                       babelArgs.GetOutputFile(),
+                                       "-Wno-override-module"};
 
   if (!babelArgs.GetTargetTriple().empty()) {
     target = "--target=" + babelArgs.GetTargetTriple();
