@@ -6,17 +6,6 @@ The idea behind the language is that it should mostly look like average code, bu
 
 ---
 
-## Keywords
-
-| Keyword | Translation | Language |
-|---------|-------------|----------|
-| `function` | `funkcjonować` | Polish |
-| `if` | `əgər` | Azerbaijani |
-| `else` | `それ以外` | Japanese |
-| `print` | `tisk` | Czech |
-
----
-
 ## Building & Debugging
 
 Babel compiles to a native executable via Clang (required). Currently supported target architectures are **aarch64** and **x86**.
@@ -27,10 +16,22 @@ Compiled programs can be debugged with LLDB.
 
 | Flag | Description |
 |------|-------------|
+| `<file>.bbl` | Input source file (required, must have `.bbl` extension) |
 | `-c` | Output to object file instead of executable |
 | `-o <filename>` | Set the output filename |
 | `-target <triple>` / `--target=<triple>` | Select an alternate build target |
 | `-sysroot <path>` / `--sysroot=<path>` | Provide an alternate sysroot |
+
+---
+
+## Keywords
+
+| Keyword | Translation | Language |
+|---------|-------------|----------|
+| `function` | `funkcjonować` | Polish |
+| `if` | `əgər` | Azerbaijani |
+| `else` | `それ以外` | Japanese |
+| `print` | `tisk` | Czech |
 
 ---
 
