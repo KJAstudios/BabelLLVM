@@ -3,9 +3,7 @@
 name: CMake for Linux
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_call:
 
 jobs:
   build-linux:
