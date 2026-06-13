@@ -17,6 +17,23 @@ The idea behind the language is that it should mostly look like average code, bu
 
 ---
 
+## Building & Debugging
+
+Babel compiles to a native executable via Clang (required). Currently supported target architectures are **aarch64** and **x86**.
+
+Compiled programs can be debugged with LLDB.
+
+### Command Line Arguments
+
+| Flag | Description |
+|------|-------------|
+| `-c` | Output to object file instead of executable |
+| `-o <filename>` | Set the output filename |
+| `-target <triple>` / `--target=<triple>` | Select an alternate build target |
+| `-sysroot <path>` / `--sysroot=<path>` | Provide an alternate sysroot |
+
+---
+
 ## Character Map
 
 | Standard | Babel | Usage |
@@ -40,7 +57,9 @@ The idea behind the language is that it should mostly look like average code, bu
 ### Statements
 
 Each statement must end with `~`.
-```x ≔ 1 ⊕ 1~```
+```
+x ≔ 1 ⊕ 1~
+```
 
 ### Functions
 
@@ -69,7 +88,7 @@ Only integers are supported. Assignment uses `≔`:
 
 ### Print
 
-'tisk' writes the variable or value to the standard output:
+`tisk` writes the variable or value to the standard output:
 ```
 tisk⟅x⟆~
 ```
