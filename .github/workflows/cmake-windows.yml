@@ -4,9 +4,8 @@ name: CMake for Windows
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    tags:
+      - 'v*'
 
 jobs:
    build-windows:
@@ -64,13 +63,6 @@ jobs:
       - name: Build
         working-directory: Babel
         run: cmake --build build --parallel
-
-      - name: Debug output
-        run: |
-          Write-Host "=== Babel/build contents ==="
-          Get-ChildItem -Recurse "Babel/build" -Filter "babel-llvm.exe" -ErrorAction SilentlyContinue
-          Write-Host "=== Babel/staging contents ==="
-          if (Test-Path "Babel/staging") { Get-ChildItem -Recurse "Babel/staging" } else { Write-Host "staging not found" }
 
       - name: Install
         working-directory: Babel

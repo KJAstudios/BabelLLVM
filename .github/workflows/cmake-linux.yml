@@ -4,9 +4,8 @@ name: CMake for Linux
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    tags:
+      - 'v*'
 
 jobs:
   build-linux:

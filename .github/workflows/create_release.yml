@@ -1,0 +1,38 @@
+# .github/workflows/release.yml
+name: Release
+
+on:
+  workflow_run:
+    workflows: ["CMake for Linux", "CMake for Windows"]
+    types:
+      - completed
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    permissions:
+      contents: write
+    steps:
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: babel-linux-*
+          merge-multiple: true
+
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: babel-windows-*
+          merge-multiple: true
+
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ github.ref_name }} \
+            babel-linux-x86_64.zip \
+            babel-linux-arm64.zip \
+            babel-windows-x64.zip \
+            --title "Release ${{ github.ref_name }}" \
+            --generate-notes
