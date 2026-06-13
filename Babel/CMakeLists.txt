@@ -48,6 +48,6 @@ install(TARGETS babel-llvm
 )
 
 # Install packaged files
-install(DIRECTORY "${CMAKE_SOURCE_DIR}/../Packaged Files/"
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/Packaged Files/"
     DESTINATION .
 )
