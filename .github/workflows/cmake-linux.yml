@@ -61,3 +61,6 @@ jobs:
       with:
         name: babel-linux-${{ matrix.arch }}
         path: babel-linux-${{ matrix.arch }}.zip
+
+    - name: Debug output
+      run: find . -name "*.zip" 2>/dev/null

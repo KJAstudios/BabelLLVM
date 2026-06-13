@@ -64,7 +64,7 @@ jobs:
       - name: Build
         working-directory: Babel
         run: cmake --build build --parallel
-        
+
       - name: Install
         working-directory: Babel
         run: cmake --install build --prefix staging
@@ -79,4 +79,6 @@ jobs:
           name: babel-windows-x64
           path: babel-windows-x64.zip
 
+      - name: Debug output
+        run: Get-ChildItem -Recurse "Babel/staging"
 
