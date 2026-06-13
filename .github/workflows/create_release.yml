@@ -28,9 +28,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create ${{ github.ref_name }} \
-            babel-linux-x86_64.zip \
-            babel-linux-arm64.zip \
-            babel-windows-x64.zip \
-            --title "Release ${{ github.ref_name }}" \
-            --generate-notes
+          gh release create ${{ github.ref_name }} babel-linux-x86_64.zip babel-linux-arm64.zip babel-windows-x64.zip --title "Release ${{ github.ref_name }}" --generate-notes
