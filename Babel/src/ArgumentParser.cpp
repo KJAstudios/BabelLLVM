@@ -22,6 +22,14 @@ BabelArgs ArgumentParser::ParseArgs(std::vector<std::string> &args) {
       continue;
     }
 
+    // only print help if --help or -h is found
+    if(curArg == "-h" || curArg == "--help"){
+      PrintHelp();
+      // set error so program doesn't continue
+      babelArgs.SetError();
+      return babelArgs;
+    }
+
     if (curArg.starts_with("--")) {
       if (!ParseSingleArg(curArg)) {
         return babelArgs;
@@ -136,4 +144,14 @@ bool ArgumentParser::ParseSingleArg(std::string arg) {
 bool ArgumentParser::IsValidBabelFileName(const std::string &fileName) {
   return std::filesystem::path(fileName).extension() == ".bbl";
 };
+
+void ArgumentParser::PrintHelp(){
+  std::cerr << "Usage: babel <.bbl source file> [OPTIONS]\n\n";
+  std::cerr << "Option                Long option             Meaning\n";
+  std::cerr << "-h                    --help                  Display program help\n";
+  std::cerr << "-c                                            Output object file instead of executable\n";
+  std::cerr << "-o <file>                                     Define name of output file\n";
+  std::cerr << "-target <value>       --target=<value>        Build program for the given target\n";
+  std::cerr << "-sysroot <directory>  --sysroot=<value>       Define the directory to search for system headers\n";
+}
 } // namespace Babel
