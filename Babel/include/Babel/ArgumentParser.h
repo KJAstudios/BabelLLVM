@@ -17,6 +17,7 @@ private:
    static bool IsValidBabelFileName(const std::string &fileName);
    static bool ParseDoubleArg(std::pair<std::string, std::string> doubleArg);
    static bool ParseSingleArg(std::string arg);
+   static void PrintHelp();
 };
 } // namespace Babel
 #endif
