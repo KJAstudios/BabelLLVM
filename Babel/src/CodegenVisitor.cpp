@@ -201,12 +201,16 @@ void CodegenVisitor::VisitIfStatement(IfStatementAST *ifStatement) {
   llvm::Function *function = builder.GetInsertBlock()->getParent();
   llvm::BasicBlock *thenBlock =
       llvm::BasicBlock::Create(context, "then", function);
-  llvm::BasicBlock *elseBlock =
-      llvm::BasicBlock::Create(context, "else", function);
   llvm::BasicBlock *mergeBlock =
       llvm::BasicBlock::Create(context, "merge", function);
 
-  builder.CreateCondBr(conditionValue, thenBlock, elseBlock);
+  // Only generate condition failed/else block if there is one
+  llvm::BasicBlock *conditionFailedBlock =
+      ifStatement->GetElseBranch() != nullptr
+          ? llvm::BasicBlock::Create(context, "else", function)
+          : mergeBlock;
+
+  builder.CreateCondBr(conditionValue, thenBlock, conditionFailedBlock);
 
   builder.SetInsertPoint(thenBlock);
   ifStatement->GetThenBranch()->Visit(*this);
@@ -215,12 +219,16 @@ void CodegenVisitor::VisitIfStatement(IfStatementAST *ifStatement) {
   }
   builder.CreateBr(mergeBlock);
 
-  builder.SetInsertPoint(elseBlock);
-  ifStatement->GetElseBranch()->Visit(*this);
-  if (statementGenerationFailed) {
-    return;
+  // Only generate condition failed/else block if there is one
+  if (ifStatement->GetElseBranch() != nullptr) {
+
+    builder.SetInsertPoint(conditionFailedBlock);
+    ifStatement->GetElseBranch()->Visit(*this);
+    if (statementGenerationFailed) {
+      return;
+    }
+    builder.CreateBr(mergeBlock);
   }
-  builder.CreateBr(mergeBlock);
 
   builder.SetInsertPoint(mergeBlock);
 }

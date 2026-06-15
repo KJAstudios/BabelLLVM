@@ -22,7 +22,7 @@ void Lexer::LoadBuffer(std::string *filename) {
   if (filename != nullptr && !filename->empty()) {
     auto memoryBuffer = llvm::MemoryBuffer::getFile(*filename);
     if (!memoryBuffer) {
-      std::cerr << memoryBuffer.getError();
+      std::cerr << memoryBuffer.getError().message();
       return;
     }
     rawMemoryBuffer = std::move(memoryBuffer.get());
@@ -107,6 +107,9 @@ void Lexer::SkipComment() {
 
     offset += GetCharSize(stringCodeBuffer[offset]);
   }
+  // clear the comment from the buffer and reset the offset so it's not marked as a token
+   stringCodeBuffer = stringCodeBuffer.drop_front(offset);
+   offset = 0;
 }
 
 Babel::TokenData Lexer::LexNumberToken() {
@@ -129,7 +132,7 @@ Babel::TokenData Lexer::LexNumberToken() {
         TokenData token =
             TokenData(llvm::StringRef(stringCodeBuffer.data(), offset),
                       Token::tok_number, line, column);
-        stringCodeBuffer = stringCodeBuffer.drop_front(offset + 1);
+        stringCodeBuffer = stringCodeBuffer.drop_front(offset);
         return token;
       }
 
@@ -142,7 +145,7 @@ Babel::TokenData Lexer::LexNumberToken() {
       TokenData token =
           TokenData(llvm::StringRef(stringCodeBuffer.data(), offset),
                     Token::tok_number, line, column);
-      stringCodeBuffer = stringCodeBuffer.drop_front(offset + 1);
+      stringCodeBuffer = stringCodeBuffer.drop_front(offset);
       return token;
     }
 

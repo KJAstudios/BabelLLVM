@@ -287,17 +287,30 @@ Parser::ParseFunctionCall(TokenLocation location, std::string functionName) {
   GetNextToken(); // consume the ⟅ token
 
   std::vector<std::unique_ptr<ExpressionAST>> arguments;
-  while (token.GetTokenType() != Token::tok_control ||
-         token.GetTokenString() != "⟆") {
-    std::unique_ptr<ExpressionAST> argument = ParseExpression();
+  bool expectExpression = true;
+  while (token.GetTokenString() != "⟆") {
+    if (expectExpression) {
+      std::unique_ptr<ExpressionAST> argument = ParseExpression();
 
-    if (argument == nullptr) {
-      LogError("Failed to parse argument in function call.",
+      if (argument == nullptr) {
+        LogError("Failed to parse argument in function call.",
+                 token.GetTokenLocation());
+        return nullptr;
+      }
+
+      arguments.push_back(std::move(argument));
+      expectExpression = false;
+      continue;
+    }
+
+    if (token.GetTokenString() != "᨞") {
+      LogError("Expected ᨞ between function arguments.",
                token.GetTokenLocation());
       return nullptr;
     }
-
-    arguments.push_back(std::move(argument));
+    // consume the ᨞
+    GetNextToken();
+    expectExpression = true;
   }
 
   GetNextToken(); // consume the ⟆ token
@@ -309,7 +322,10 @@ Parser::ParseFunctionCall(TokenLocation location, std::string functionName) {
              token.GetTokenLocation());
     return nullptr;
   }
-  GetNextToken(); // consume the ~ token
+
+  if (!CheckEndOfStatement()) {
+    return nullptr;
+  }
 
   return std::make_unique<FunctionCallStatementAST>(
       location, std::move(functionName), std::move(arguments));
@@ -337,6 +353,9 @@ Parser::ParseAssignmentStatement(TokenLocation location,
   if (initializer == nullptr) {
     LogError("Failed to parse initializer expression in assignment statement.",
              location);
+    return nullptr;
+  }
+  if (!CheckEndOfStatement()) {
     return nullptr;
   }
   return std::make_unique<AssignmentStatementAST>(

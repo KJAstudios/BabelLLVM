@@ -91,7 +91,6 @@ bool Babel::DoesMainExist() {
 }
 
 int Babel::OutputObjectFile(std::string &fileName) {
-
   std::string validationError;
   llvm::raw_string_ostream errorStream(validationError);
   if (llvm::verifyModule(*module, &errorStream)) {
