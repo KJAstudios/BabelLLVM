@@ -50,6 +50,7 @@ Compiled programs can be debugged with LLDB.
 | `=` | `≔` | Assignment  |
 | `,` | `᨞` | Function Argument Delimiter |
 | `;` | `~` | Statement terminator |
+| `//` | `✎` | Comment | 
 
 ---
 
@@ -64,7 +65,8 @@ x ≔ 1 ⊕ 1~
 
 ### Functions
 
-Functions are declared in the format `function (args) FunctionName {}`. The main function **must** be named `主要的`.
+Functions are declared in the format `function (args) FunctionName {}`. Arguments are separated by `᨞`.
+ The main function **must** be named `主要的`. 
 
 **Main function declaration:**
 ```
@@ -73,10 +75,19 @@ funkcjonować ⟅⟆ 主要的꧁
 ꧂
 ```
 
+**Custom function declaration:**
+```
+funkcjonować ⟅arg1 ᨞ arg2⟆ functionName꧁
+...
+꧂
+```
+
 ### Assignment
 
-Only integers are supported. Assignment uses `≔`:
+Only integers are supported. Results of arithmetic can be used, but not comparisons.  Assignment uses `≔`:
 `x ≔ 42~`
+`x ≔ 1 ⊕ 1~`
+`z ≔ x ⊕ y~`
 
 ### If / Else
 
@@ -94,7 +105,13 @@ Only integers are supported. Assignment uses `≔`:
 tisk⟅x⟆~
 ```
 
-> **Note:** Loops, return values, and comments are not yet defined.
+### Comments
+Comments are single lines beginning with `✎`
+```
+✎ This is a comment
+```
+
+> **Note:** Loops and return values are not yet defined.
 
 ---
 
