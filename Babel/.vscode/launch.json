@@ -6,7 +6,7 @@
             "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/build/babel-llvm",
-            "args": ["test.bbl", "-o", "objectFile.o"],
+            "args": ["${workspaceFolder}/build/test.bbl"],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "CMake: build"
         }

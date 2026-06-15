@@ -309,7 +309,10 @@ Parser::ParseFunctionCall(TokenLocation location, std::string functionName) {
              token.GetTokenLocation());
     return nullptr;
   }
-  GetNextToken(); // consume the ~ token
+  
+  if (!CheckEndOfStatement()) {
+    return nullptr;
+  }
 
   return std::make_unique<FunctionCallStatementAST>(
       location, std::move(functionName), std::move(arguments));
@@ -337,6 +340,9 @@ Parser::ParseAssignmentStatement(TokenLocation location,
   if (initializer == nullptr) {
     LogError("Failed to parse initializer expression in assignment statement.",
              location);
+    return nullptr;
+  }
+  if (!CheckEndOfStatement()) {
     return nullptr;
   }
   return std::make_unique<AssignmentStatementAST>(
