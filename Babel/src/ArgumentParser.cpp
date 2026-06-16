@@ -6,8 +6,10 @@
 namespace Babel {
   BabelArgs Babel::ArgumentParser::babelArgs = {};
 BabelArgs ArgumentParser::ParseArgs(std::vector<std::string> &args) {
+
   if (args.size() < 2) {
-    std::cerr << "No input file provided.";
+    PrintHelp();
+    babelArgs.SetError();
     return babelArgs;
   }
 

@@ -12,7 +12,7 @@ add_definitions(${LLVM_DEFINITIONS})
 
 file(GLOB_RECURSE SRCS "src/*.cpp")
 
-add_executable(babel-llvm ${SRCS})
+add_executable(babel ${SRCS})
 
 llvm_map_components_to_libnames(LLVM_LIBS
     Core
@@ -36,14 +36,14 @@ llvm_map_components_to_libnames(LLVM_LIBS
     AArch64Info
 )
 
-target_link_libraries(babel-llvm PRIVATE ${LLVM_LIBS})
+target_link_libraries(babel PRIVATE ${LLVM_LIBS})
 
 if(UNIX)
-    target_link_options(babel-llvm PRIVATE ${LLVM_LD_FLAGS} -rdynamic)
+    target_link_options(babel PRIVATE ${LLVM_LD_FLAGS} -rdynamic)
 endif()
 
 # Install the executable
-install(TARGETS babel-llvm
+install(TARGETS babel
     RUNTIME DESTINATION .
 )
 
