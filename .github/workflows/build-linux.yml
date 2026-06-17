@@ -60,6 +60,7 @@ jobs:
     - name: Package
       working-directory: Babel
       run: |
+        mkdir -p staging/dependencies, staging/dependencies/lib
         cp $(which clang-20) staging/dependencies
         cp $(which lld) staging/dependencies
         cp -r $(clang-20 --print-resource-dir) staging/dependencies/lib/clang/
