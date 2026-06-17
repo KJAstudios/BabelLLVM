@@ -78,13 +78,16 @@ std::string Linker::GetClangPath(std::string &executablePath) {
   for (auto &name : candidates) {
     llvm::SmallString<256> bundledPath(exePath);
     llvm::sys::path::append(bundledPath, name);
+    std::cerr << "Looking for Clang at " << bundledPath.str().str() << '\n';
     if (llvm::sys::fs::exists(bundledPath)) {
+      std::cerr << "Found Clang in dependencies.\n";
       return std::string(bundledPath);
     }
   }
 
   // check PATH if the dependecy isn't found
   for (auto &name : candidates) {
+    std::cerr << "Clang not found in dependencies, checking path\n";
     auto found = llvm::sys::findProgramByName(name);
     if (found) {
       return *found;
