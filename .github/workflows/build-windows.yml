@@ -4,6 +4,7 @@ name: CMake for Windows
 
 on:
   workflow_call:
+  workflow_dispatch:
 
 jobs:
    build-windows:
@@ -52,6 +53,27 @@ jobs:
           path: C:/LLVM
           key: llvm-20.1.6-windows-x64-v1
 
+      - name: Cache llvm-mingw
+        id: cache-llvm-mingw
+        uses: actions/cache/restore@v4
+        with: 
+          path: C:/llvm-mingw
+          key: llvm-mingw-20250401
+      
+      - name: Download llvm-mingw
+        if: steps.cache-llvm-mingw.outputs.cache-hit != 'true'
+        run: |
+          $url = "https://github.com/mzstorsjo/llvm-mingw/releases/download/20250401/llvm-mingw-20250401-ucrt-x86_64.zip"
+          Invoke-WebRequest $url -OutFile llvm-mingw.zip
+          Expand-Archive llvm-mingw.zip -DestinationPath C:/llvm-mingw
+
+      - name: Save llvm-mingw cache
+        if: steps.cache-llvm-mingw.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: C:/llvm-mingw
+          key: llvm-mingw-20250401
+
       - name: Configure CMake
         working-directory: Babel
         run: cmake -B build -G Ninja `
@@ -68,7 +90,12 @@ jobs:
 
       - name: Package
         working-directory: Babel
-        run: Compress-Archive -Path staging/* -DestinationPath ../babel-windows-x64.zip
+        run: |
+          cp C:/llvm-mingw/bin/clang.exe staging/dependencies/
+          cp C:/llvm-mingw/bin/ld.lld.exe staging/dependencies/
+          $resourceDir = C:/llvm-mingw/bin/clang.exe --print-resource-dir
+          cp -r $resourceDir dist/lib/clang/
+          Compress-Archive -Path staging/* -DestinationPath ../babel-windows-x64.zip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
