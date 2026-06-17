@@ -63,7 +63,8 @@ jobs:
       - name: Download llvm-mingw
         if: steps.cache-llvm-mingw.outputs.cache-hit != 'true'
         run: |
-          $url = "https://github.com/mstorsjo/llvm-mingw/releases/download/20260602/llvm-mingw-20260602-ucrt-x86_64.zip"          Invoke-WebRequest $url -OutFile llvm-mingw.zip
+          $url = "https://github.com/mstorsjo/llvm-mingw/releases/download/20260602/llvm-mingw-20260602-ucrt-x86_64.zip"
+          Invoke-WebRequest $url -OutFile llvm-mingw.zip
           Expand-Archive llvm-mingw.zip -DestinationPath C:/llvm-mingw
 
       - name: Save llvm-mingw cache
