@@ -1,7 +1,7 @@
 #include "Babel/Linker.h"
 #include "Babel/BabelArgs.h"
 #include <filesystem>
-#include <llvm-20/llvm/Support/Path.h>
+#include <llvm/Support/Path.h>
 #include <llvm/ADT/SmallString.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/Path.h>
