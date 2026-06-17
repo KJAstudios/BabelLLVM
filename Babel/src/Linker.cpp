@@ -1,7 +1,6 @@
 #include "Babel/Linker.h"
 #include "Babel/BabelArgs.h"
 #include <filesystem>
-#include <llvm/Support/Path.h>
 #include <llvm/ADT/SmallString.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/Path.h>
@@ -11,18 +10,17 @@
 namespace Babel {
 void Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
                        std::string &executablePath) {
-
-  if (!std::filesystem::exists("runtime.bc")) {
-    std::cerr << "Babel Runtime Library not found";
-    return;
-  }
-
   std::string clangPath = GetClangPath(executablePath);
-  if(clangPath.empty()){
-	std::cerr << "Error: Clang not found.";
+  if (clangPath.empty()) {
+    std::cerr << "Error: Clang not found.\n";
   }
 
   std::string libraryFilePath = GetLibraryFilePath();
+  std::cerr << "Library path: " << libraryFilePath << '\n';
+  if (libraryFilePath.empty()) {
+    std::cerr << "Error: core library not found.\n";
+  }
+
   std::string target;
   std::string sysroot;
   std::vector<llvm::StringRef> args = {clangPath,
@@ -57,8 +55,11 @@ std::string Linker::GetLibraryFilePath() {
   if (llvm::sys::fs::exists("runtime.bc")) {
     return "runtime.bc";
   }
+  if (llvm::sys::fs::exists("dependencies/runtime.bc")) {
+    return "dependencies/runtime.bc";
+  }
 
-  return "dependencies/runtime.bc";
+  return "";
 }
 
 std::string Linker::GetClangPath(std::string &executablePath) {
