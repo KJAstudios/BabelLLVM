@@ -99,7 +99,7 @@ jobs:
       - name: Package
         working-directory: Babel
         run: |
-          cp C:/llvm-mingw//bin/clang.exe staging/dependencies/
+          cp C:/llvm-mingw/bin/clang*.exe staging/dependencies/
           cp C:/llvm-mingw//bin/ld.lld.exe staging/dependencies/
           $resourceDir = & "C:/llvm-mingw/bin/clang.exe" --print-resource-dir
           cp -r $resourceDir staging/dependencies/lib/clang/
