@@ -67,6 +67,10 @@ jobs:
           Invoke-WebRequest $url -OutFile llvm-mingw.zip
           Expand-Archive llvm-mingw.zip -DestinationPath C:/llvm-mingw
 
+      - name: Debug llvm-mingw
+        run: |
+          ls C:/llvm-mingw
+
       - name: Save llvm-mingw cache
         if: steps.cache-llvm-mingw.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
