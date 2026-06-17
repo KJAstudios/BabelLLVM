@@ -58,13 +58,12 @@ jobs:
         uses: actions/cache/restore@v4
         with: 
           path: C:/llvm-mingw
-          key: llvm-mingw-20250401
+          key: llvm-mingw-20260602
       
       - name: Download llvm-mingw
         if: steps.cache-llvm-mingw.outputs.cache-hit != 'true'
         run: |
-          $url = "https://github.com/mzstorsjo/llvm-mingw/releases/download/20250401/llvm-mingw-20250401-ucrt-x86_64.zip"
-          Invoke-WebRequest $url -OutFile llvm-mingw.zip
+          $url = "https://github.com/mstorsjo/llvm-mingw/releases/download/20260602/llvm-mingw-20260602-ucrt-x86_64.zip"          Invoke-WebRequest $url -OutFile llvm-mingw.zip
           Expand-Archive llvm-mingw.zip -DestinationPath C:/llvm-mingw
 
       - name: Save llvm-mingw cache
@@ -72,7 +71,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: C:/llvm-mingw
-          key: llvm-mingw-20250401
+          key: llvm-mingw-20260602
 
       - name: Configure CMake
         working-directory: Babel
