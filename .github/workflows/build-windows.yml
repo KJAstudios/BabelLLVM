@@ -65,7 +65,11 @@ jobs:
         run: |
           $url = "https://github.com/mstorsjo/llvm-mingw/releases/download/20260602/llvm-mingw-20260602-ucrt-x86_64.zip"
           Invoke-WebRequest $url -OutFile llvm-mingw.zip
-          Expand-Archive llvm-mingw.zip -DestinationPath C:/llvm-mingw
+          Expand-Archive llvm-mingw.zip -DestinationPath C:/llvm-mingw-tmp
+          # Move the inner versioned folder up so bin/ is directly at C:/llvm-mingw/bin/
+          $inner = Get-ChildItem C:/llvm-mingw-tmp | Select-Object -First 1
+          Move-Item $inner.FullName C:/llvm-mingw
+          Remove-Item C:/llvm-mingw-tmp
 
       - name: Debug llvm-mingw
         run: |
@@ -95,8 +99,8 @@ jobs:
       - name: Package
         working-directory: Babel
         run: |
-          cp C:/llvm-mingw/bin/clang.exe staging/dependencies/
-          cp C:/llvm-mingw/bin/ld.lld.exe staging/dependencies/
+          cp C:/llvm-mingw//bin/clang.exe staging/dependencies/
+          cp C:/llvm-mingw//bin/ld.lld.exe staging/dependencies/
           $resourceDir = & "C:/llvm-mingw/bin/clang.exe" --print-resource-dir
           cp -r $resourceDir staging/dependencies/lib/clang/
           Compress-Archive -Path staging/* -DestinationPath ../babel-windows-x64.zip
