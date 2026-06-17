@@ -8,17 +8,21 @@
 #include <string>
 #include <system_error>
 namespace Babel {
-void Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
-                       std::string &executablePath) {
+int Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
+                      std::string &executablePath) {
   std::string clangPath = GetClangPath(executablePath);
   if (clangPath.empty()) {
     std::cerr << "Error: Clang not found.\n";
+    RemoveObjectFile(objectFilePath);
+    return 1;
   }
 
   std::string libraryFilePath = GetLibraryFilePath();
   std::cerr << "Library path: " << libraryFilePath << '\n';
   if (libraryFilePath.empty()) {
     std::cerr << "Error: core library not found.\n";
+    RemoveObjectFile(objectFilePath);
+    return 1;
   }
 
   std::string target;
@@ -43,12 +47,14 @@ void Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
   std::string errorMessage;
   int result = llvm::sys::ExecuteAndWait(clangPath, args, std::nullopt, {}, 0,
                                          0, &errorMessage);
-
-  std::error_code errorCode = llvm::sys::fs::remove(objectFilePath);
-  if (errorCode) {
-    std::cerr << "Error cleaning up temporary object file: "
-              << errorCode.message() << '\n';
+  if (result != 0) {
+    std::cerr << "Clang linker failed (exit " << result << "): " << errorMessage
+              << "\n";
+    RemoveObjectFile(objectFilePath);
+    return 1;
   }
+
+  return RemoveObjectFile(objectFilePath);
 }
 
 std::string Linker::GetLibraryFilePath() {
@@ -95,5 +101,15 @@ std::string Linker::GetClangPath(std::string &executablePath) {
   }
 
   return "";
+}
+
+int Linker::RemoveObjectFile(std::string &objectFilePath) {
+  std::error_code errorCode = llvm::sys::fs::remove(objectFilePath);
+  if (errorCode) {
+    std::cerr << "Error cleaning up temporary object file: "
+              << errorCode.message() << '\n';
+    return 1;
+  }
+  return 0;
 }
 } // namespace Babel

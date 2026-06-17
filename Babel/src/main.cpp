@@ -61,6 +61,6 @@ int main(int argCount, char *argv[]) {
   std::string executablePath =
       llvm::sys::fs::getMainExecutable(argv[0], nullptr);
 
-  Babel::Linker::RunLinker(argData, outputFileName, executablePath);
+  int linkerResult = Babel::Linker::RunLinker(argData, outputFileName, executablePath);
   llvm::errs() << "Executable written to " << argData.GetOutputFile() << '\n';
 };

@@ -5,11 +5,12 @@
 namespace Babel {
 class Linker {
 public:
-  static void RunLinker(BabelArgs babelArgs, std::string &objectFilePath, std::string &exectuablePath);
+  static int RunLinker(BabelArgs babelArgs, std::string &objectFilePath, std::string &exectuablePath);
 
 private:
   static std::string GetLibraryFilePath();
   static std::string GetClangPath(std::string &executablePath);
+  static int RemoveObjectFile(std::string &objectFilePath);
 };
 } // namespace Babel
 #endif
