@@ -1,60 +1,13 @@
+#include "Babel//Linker.h"
 #include "Babel/ArgumentParser.h"
 #include "Babel/Babel.h"
 #include "Babel/BabelArgs.h"
-#include <filesystem>
 #include <llvm/ADT/SmallString.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/Program.h>
 #include <system_error>
 
 namespace {
-
-std::string GetLibraryFilePath() {
-  if (llvm::sys::fs::exists("runtime.bc")) {
-    return "runtime.bc";
-  }
-
-  return "dependencies/runtime.bc";
-}
-
-void RunLinker(Babel::BabelArgs babelArgs, std::string &objectFilePath) {
-  std::string clangPath = llvm::sys::findProgramByName("clang").get();
-
-  if (!std::filesystem::exists("runtime.bc")) {
-    std::cerr << "Babel Runtime Library not found";
-    return;
-  }
-  std::string libraryFilePath = GetLibraryFilePath();
-  std::string target;
-  std::string sysroot;
-  std::vector<llvm::StringRef> args = {clangPath,
-                                       objectFilePath,
-                                       libraryFilePath,
-                                       "-o",
-                                       babelArgs.GetOutputFile(),
-                                       "-Wno-override-module"};
-
-  if (!babelArgs.GetTargetTriple().empty()) {
-    target = "--target=" + babelArgs.GetTargetTriple();
-    args.emplace_back(target);
-  }
-
-  if (!babelArgs.GetSysRoot().empty()) {
-    sysroot = "--sysroot=" + babelArgs.GetSysRoot();
-    args.emplace_back(target);
-  }
-
-  std::string errorMessage;
-  int result = llvm::sys::ExecuteAndWait(clangPath, args, std::nullopt, {}, 0,
-                                         0, &errorMessage);
-
-  std::error_code errorCode = llvm::sys::fs::remove(objectFilePath);
-  if (errorCode) {
-    std::cerr << "Error cleaning up temporary object file: "
-              << errorCode.message() << '\n';
-  }
-}
-
 std::string GetOutputFile(Babel::BabelArgs &args) {
   if (args.GetObjectFileOnlyStatus()) {
     return args.GetOutputFile();
@@ -103,6 +56,11 @@ int main(int argCount, char *argv[]) {
     return 0;
   }
 
-  RunLinker(argData, outputFileName);
+  // get the location of the executable so we can grab clang bundled with the
+  // build
+  std::string executablePath =
+      llvm::sys::fs::getMainExecutable(argv[0], nullptr);
+
+  Babel::Linker::RunLinker(argData, outputFileName, executablePath);
   llvm::errs() << "Executable written to " << argData.GetOutputFile() << '\n';
 };

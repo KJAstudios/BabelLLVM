@@ -60,11 +60,11 @@ jobs:
     - name: Package
       working-directory: Babel
       run: |
-        mkdir -p staging/dependencies, staging/dependencies/lib
+        mkdir -p staging/dependencies/lib
         cp $(which clang-20) staging/dependencies
         cp $(which lld) staging/dependencies
         cp -r $(clang-20 --print-resource-dir) staging/dependencies/lib/clang/
-        zip -r ../babel-linux-${{ matrix.arch }}.zip staging/
+        cd staging && zip -r ../babel-linux-${{ matrix.arch }}.zip .
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4

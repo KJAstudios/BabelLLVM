@@ -91,11 +91,10 @@ jobs:
       - name: Package
         working-directory: Babel
         run: |
-          mkdir staging/dependencies
           cp C:/llvm-mingw/bin/clang.exe staging/dependencies/
           cp C:/llvm-mingw/bin/ld.lld.exe staging/dependencies/
-          $resourceDir = C:/llvm-mingw/bin/clang.exe --print-resource-dir
-          cp -r $resourceDir dist/lib/clang/
+          $resourceDir = & "C:/llvm-mingw/bin/clang.exe" --print-resource-dir
+          cp -r $resourceDir staging/dependencies/lib/clang/
           Compress-Archive -Path staging/* -DestinationPath ../babel-windows-x64.zip
 
       - name: Upload artifact
