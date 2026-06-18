@@ -102,8 +102,6 @@ jobs:
 
           # make sure to include the clang licenses
           cp C:/llvm-mingw/LICENSE.TXT staging/dependencies/LLVM-LICENSE.TXT
-          # If a licenses/ dir exists:
-          cp -r C:/llvm-mingw/licenses staging/dependencies/licenses/
 
           $resourceDir = & "C:/llvm-mingw/bin/clang.exe" --print-resource-dir
           cp -r $resourceDir staging/dependencies/clang/lib/clang/
