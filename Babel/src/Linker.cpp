@@ -17,7 +17,7 @@ int Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
     return 1;
   }
 
-  std::string libraryFilePath = GetLibraryFilePath();
+  std::string libraryFilePath = GetLibraryFilePath(executablePath);
   std::cerr << "Library path: " << libraryFilePath << '\n';
   if (libraryFilePath.empty()) {
     std::cerr << "Error: core library not found.\n";
