@@ -17,6 +17,7 @@ jobs:
           path: C:/LLVM
           key: llvm-20.1.6-windows-x64-v1
 
+      # build and cache llvm, since the downloads don't contain the necessary cmake files
       - name: Checkout LLVM
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
@@ -58,6 +59,7 @@ jobs:
           path: C:/llvm-mingw
           key: llvm-mingw-20260602
       
+      # cache llvm-mingw for clang/build dependencies
       - name: Download llvm-mingw
         if: steps.cache-llvm-mingw.outputs.cache-hit != 'true'
         run: |
@@ -76,6 +78,41 @@ jobs:
           path: C:/llvm-mingw
           key: llvm-mingw-20260602
 
+      # linux sysroots for cross-compilation
+      - name: Cache Linux sysroots
+        id: cache-sysroots
+        uses: actions/cache/restore@v4
+        with:
+          path: C:/sysroots
+          key: sysroots-windows-v1
+      
+      - name: Download Linux x86-64 sysroot
+        if: steps.cache-sysroots.outputs.cache-hit != 'true'
+        run: |
+          New-Item -ItemType Directory -Force -Path C:/sysroots/x86_64-unknown-linux-gnu
+          Invoke-WebRequest `
+            "https://commondatastorage.googleapis.com/chrome-linux-sysroot/toolchain/4f611ec025be98214164d4bf9fbe8843f58533f7/debian_bullseye_amd64_sysroot.tar.xz" `
+            -OutFile C:/tmp-sysroot-x86_64.tar.xz
+          tar -xf C:/tmp-sysroot-x86_64.tar.xz -C C:/sysroots/x86_64-unknown-linux-gnu
+ 
+      - name: Download Linux ARM64 sysroot
+        if: steps.cache-sysroots.outputs.cache-hit != 'true'
+        run: |
+          New-Item -ItemType Directory -Force -Path C:/sysroots/aarch64-unknown-linux-gnu
+          Invoke-WebRequest `
+            "https://commondatastorage.googleapis.com/chrome-linux-sysroot/toolchain/906cc7c6bf47d4bd969a3221fc0602c6b3153caa/debian_bullseye_arm64_sysroot.tar.xz" `
+            -OutFile C:/tmp-sysroot-arm64.tar.xz
+          tar -xf C:/tmp-sysroot-arm64.tar.xz -C C:/sysroots/aarch64-unknown-linux-gnu
+
+      - name: Save Linux sysroots cache
+        if: steps.cache-sysroots.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: C:/sysroots
+          key: sysroots-windows-v1
+
+      # build
+
       - name: Configure CMake
         working-directory: Babel
         run: cmake -B build -G Ninja `
@@ -90,7 +127,7 @@ jobs:
         working-directory: Babel
         run: cmake --install build --prefix staging
 
-      - name: Package
+      - name: Package compiler dependencies
         working-directory: Babel
         run: |
           mkdir staging/dependencies/clang
@@ -105,6 +142,19 @@ jobs:
 
           $resourceDir = & "C:/llvm-mingw/bin/clang.exe" --print-resource-dir
           cp -r $resourceDir staging/dependencies/clang/lib/clang/
+
+      - name: Package sysroots
+        working-directory: Babel
+        run: |
+          New-Item -ItemType Directory -Force -Path staging/dependencies/sysroots
+ 
+          # Linux sysroots (downloaded separately)
+          cp -r C:/sysroots/x86_64-unknown-linux-gnu  staging/dependencies/sysroots/
+          cp -r C:/sysroots/aarch64-unknown-linux-gnu staging/dependencies/sysroots/
+ 
+          # Windows sysroot comes from llvm-mingw (just the MinGW target dir)
+          New-Item -ItemType Directory -Force -Path staging/dependencies/sysroots/x86_64-w64-windows-gnu
+          cp -r C:/llvm-mingw/x86_64-w64-mingw32 staging/dependencies/sysroots/x86_64-w64-windows-gnu/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

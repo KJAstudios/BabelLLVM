@@ -10,6 +10,7 @@ public:
 private:
   static std::string GetLibraryFilePath(std::string &executablePath);
   static std::string GetClangPath(std::string &executablePath);
+  static std::string GetSysrootPath(std::string &executablePath, std::string &targetTriple);
   static int RemoveObjectFile(std::string &objectFilePath);
 };
 } // namespace Babel

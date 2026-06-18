@@ -33,13 +33,20 @@ int Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
                                        babelArgs.GetOutputFile(),
                                        "-Wno-override-module"};
 
-  if (!babelArgs.GetTargetTriple().empty()) {
+  bool targetDefined = !babelArgs.GetTargetTriple().empty();
+
+  if (targetDefined) {
     target = "--target=" + babelArgs.GetTargetTriple();
     args.emplace_back(target);
   }
 
   if (!babelArgs.GetSysRoot().empty()) {
     sysroot = "--sysroot=" + babelArgs.GetSysRoot();
+    args.emplace_back(sysroot);
+  }
+  // default to the packaged dependencies if a target is provided and no sysroot
+  else if(targetDefined){
+    sysroot = "--sysroot=" + GetSysrootPath(executablePath, babelArgs.GetTargetTriple());
     args.emplace_back(sysroot);
   }
 
@@ -104,6 +111,15 @@ std::string Linker::GetClangPath(std::string &executablePath) {
   }
 
   return "";
+}
+
+std::string Linker::GetSysrootPath(std::string &executablePath,
+                                   std::string &targetTriple) {
+  llvm::SmallString<256> sysrootPath(executablePath);
+  llvm::sys::path::remove_filename(sysrootPath);
+  llvm::sys::path::append(sysrootPath, "dependencies", "sysroots",
+                          targetTriple);
+  return sysrootPath.str().str();
 }
 
 int Linker::RemoveObjectFile(std::string &objectFilePath) {
