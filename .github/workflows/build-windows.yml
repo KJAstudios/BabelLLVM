@@ -71,10 +71,6 @@ jobs:
           Move-Item $inner.FullName C:/llvm-mingw
           Remove-Item C:/llvm-mingw-tmp
 
-      - name: Debug llvm-mingw
-        run: |
-          ls C:/llvm-mingw
-
       - name: Save llvm-mingw cache
         if: steps.cache-llvm-mingw.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
@@ -95,10 +91,6 @@ jobs:
       - name: Install
         working-directory: Babel
         run: cmake --install build --prefix staging
-
-      - name: Check clang.exe dependencies
-        run: |
-          & "C:/llvm-mingw/bin/llvm-objdump.exe" -p C:/llvm-mingw/bin/clang.exe | Select-String "DLL Name"
 
       - name: Package
         working-directory: Babel

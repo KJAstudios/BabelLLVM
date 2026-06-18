@@ -18,7 +18,6 @@ int Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
   }
 
   std::string libraryFilePath = GetLibraryFilePath(executablePath);
-  std::cerr << "Library path: " << libraryFilePath << '\n';
   if (libraryFilePath.empty()) {
     std::cerr << "Error: core library not found.\n";
     RemoveObjectFile(objectFilePath);
@@ -67,7 +66,6 @@ std::string Linker::GetLibraryFilePath(std::string &executablePath) {
   llvm::SmallString<256> libPath(executablePath);
   llvm::sys::path::remove_filename(libPath);
   llvm::sys::path::append(libPath, "dependencies", "runtime.bc");
-  std::cerr << "Checking for library at " << libPath.str().str() << '\n';
 
   if (llvm::sys::fs::exists(libPath)) {
     return std::string(libPath);
@@ -92,16 +90,13 @@ std::string Linker::GetClangPath(std::string &executablePath) {
   for (auto &name : candidates) {
     llvm::SmallString<256> bundledPath(exePath);
     llvm::sys::path::append(bundledPath, name);
-    std::cerr << "Looking for Clang at " << bundledPath.str().str() << '\n';
     if (llvm::sys::fs::exists(bundledPath)) {
-      std::cerr << "Found Clang in dependencies.\n";
       return std::string(bundledPath);
     }
   }
 
   // check PATH if the dependecy isn't found
   for (auto &name : candidates) {
-    std::cerr << "Clang not found in dependencies, checking path\n";
     auto found = llvm::sys::findProgramByName(name);
     if (found) {
       return *found;
