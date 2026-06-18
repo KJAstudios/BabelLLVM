@@ -41,7 +41,7 @@ int Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
 
   if (!babelArgs.GetSysRoot().empty()) {
     sysroot = "--sysroot=" + babelArgs.GetSysRoot();
-    args.emplace_back(target);
+    args.emplace_back(sysroot);
   }
 
   std::string errorMessage;
@@ -57,12 +57,18 @@ int Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
   return RemoveObjectFile(objectFilePath);
 }
 
-std::string Linker::GetLibraryFilePath() {
+std::string Linker::GetLibraryFilePath(std::string &executablePath) {
+  // case for running in the development environment
   if (llvm::sys::fs::exists("runtime.bc")) {
     return "runtime.bc";
   }
-  if (llvm::sys::fs::exists("dependencies/runtime.bc")) {
-    return "dependencies/runtime.bc";
+
+  // dependencies folder is only copied over for the finalized build
+  llvm::SmallString<256> libPath(executablePath);
+  llvm::sys::path::append(libPath, "dependencies", "runtime.bc");
+
+  if (llvm::sys::fs::exists(libPath)) {
+    return std::string(libPath);
   }
 
   return "";

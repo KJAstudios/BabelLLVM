@@ -8,7 +8,7 @@ public:
   static int RunLinker(BabelArgs babelArgs, std::string &objectFilePath, std::string &exectuablePath);
 
 private:
-  static std::string GetLibraryFilePath();
+  static std::string GetLibraryFilePath(std::string &executablePath);
   static std::string GetClangPath(std::string &executablePath);
   static int RemoveObjectFile(std::string &objectFilePath);
 };
