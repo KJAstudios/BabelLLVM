@@ -65,6 +65,7 @@ std::string Linker::GetLibraryFilePath(std::string &executablePath) {
 
   // dependencies folder is only copied over for the finalized build
   llvm::SmallString<256> libPath(executablePath);
+  llvm::sys::path::remove_filename(libPath);
   llvm::sys::path::append(libPath, "dependencies", "runtime.bc");
   std::cerr << "Checking for library at " << libPath.str().str() << '\n';
 
