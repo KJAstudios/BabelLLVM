@@ -79,7 +79,7 @@ std::string Linker::GetLibraryFilePath(std::string &executablePath) {
 std::string Linker::GetClangPath(std::string &executablePath) {
   llvm::SmallString<256> exePath(executablePath);
   llvm::sys::path::remove_filename(exePath);
-  llvm::sys::path::append(exePath, "dependencies");
+  llvm::sys::path::append(exePath, "dependencies", "clang");
 
   llvm::SmallVector<llvm::StringRef, 4> candidates;
 #if defined(_WIN32)
