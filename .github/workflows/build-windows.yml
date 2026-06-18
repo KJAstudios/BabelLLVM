@@ -147,6 +147,10 @@ jobs:
         working-directory: Babel
         run: |
           New-Item -ItemType Directory -Force -Path staging/dependencies/sysroots
+
+          # Enable long path support for deep sysroot trees
+          New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
+            -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
  
           # Linux sysroots (downloaded separately)
           cp -r C:/sysroots/x86_64-unknown-linux-gnu  staging/dependencies/sysroots/
