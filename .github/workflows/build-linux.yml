@@ -62,6 +62,7 @@ jobs:
         mkdir -p sysroots/x86_64-w64-windows-gnu
         wget -q https://github.com/mstorsjo/llvm-mingw/releases/download/20260602/llvm-mingw-20260602-ucrt-ubuntu-22.04-x86_64.tar.xz \
           -O /tmp/llvm-mingw.tar.xz
+        mkdir -p /tmp/llvm-mingw-full
         # Extract only the sysroot portions (headers + CRT), not the compiler tools
         tar -xf /tmp/llvm-mingw.tar.xz -C /tmp/llvm-mingw-full --strip-components=1
         cp -r /tmp/llvm-mingw-full/x86_64-w64-mingw32 sysroots/x86_64-w64-windows-gnu/
