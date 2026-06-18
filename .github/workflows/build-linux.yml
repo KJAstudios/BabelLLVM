@@ -64,10 +64,9 @@ jobs:
         cp $(which clang-20) staging/dependencies
         cp $(which lld) staging/dependencies
         cp -r $(clang-20 --print-resource-dir) staging/dependencies/lib/clang/
-        cd staging && zip -r ../babel-linux-${{ matrix.arch }}.zip .
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: babel-linux-${{ matrix.arch }}
-        path: babel-linux-${{ matrix.arch }}.zip
+        path: Babel/staging
