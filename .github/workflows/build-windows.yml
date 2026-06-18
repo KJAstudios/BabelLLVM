@@ -96,6 +96,10 @@ jobs:
         working-directory: Babel
         run: cmake --install build --prefix staging
 
+      - name: Check clang.exe dependencies
+        run: |
+          & "C:/llvm-mingw/bin/llvm-objdump.exe" -p C:/llvm-mingw/bin/clang.exe | Select-String "DLL Name"
+
       - name: Package
         working-directory: Babel
         run: |
