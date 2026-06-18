@@ -1,5 +1,3 @@
-# This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
-# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
 name: CMake for Windows
 
 on:
@@ -96,10 +94,16 @@ jobs:
         working-directory: Babel
         run: |
           mkdir staging/dependencies/clang
+          # copy over clang and clang's dependencies
           cp C:/llvm-mingw/bin/clang.exe staging/dependencies/clang
           cp C:/llvm-mingw/bin/clang-22.exe staging/dependencies/clang
           cp C:/llvm-mingw/bin/ld.lld.exe staging/dependencies/clang
           cp C:/llvm-mingw/bin/*.dll staging/dependencies/clang
+
+          # make sure to include the clang licenses
+          cp C:/llvm-mingw/LICENSE.TXT staging/dependencies/LLVM-LICENSE.TXT
+          # If a licenses/ dir exists:
+          cp -r C:/llvm-mingw/licenses staging/dependencies/licenses/
 
           $resourceDir = & "C:/llvm-mingw/bin/clang.exe" --print-resource-dir
           cp -r $resourceDir staging/dependencies/clang/lib/clang/
