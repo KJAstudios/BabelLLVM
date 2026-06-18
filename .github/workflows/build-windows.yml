@@ -101,7 +101,21 @@ jobs:
         run: |
           cp C:/llvm-mingw/bin/clang.exe staging/dependencies/
           cp C:/llvm-mingw/bin/clang-22.exe staging/dependencies/
-          cp C:/llvm-mingw//bin/ld.lld.exe staging/dependencies/
+          cp C:/llvm-mingw/bin/ld.lld.exe staging/dependencies/
+
+          # Copy MinGW runtime DLLs that clang.exe depends on
+          $mingwDlls = @(
+            "libwinpthread-1.dll",
+            "libstdc++-6.dll",
+            "libgcc_s_seh-1.dll",
+            "libc++.dll",
+            "libunwind.dll"
+          )
+          foreach ($dll in $mingwDlls) {
+            $src = "C:/llvm-mingw/bin/$dll"
+            if (Test-Path $src) { cp $src staging/dependencies/ }
+          }
+
           $resourceDir = & "C:/llvm-mingw/bin/clang.exe" --print-resource-dir
           cp -r $resourceDir staging/dependencies/lib/clang/
           Compress-Archive -Path staging/* -DestinationPath ../babel-windows-x64.zip
