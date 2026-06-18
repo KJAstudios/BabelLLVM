@@ -150,8 +150,11 @@ jobs:
 
           robocopy C:/sysroots/x86_64-unknown-linux-gnu `
             staging/dependencies/sysroots/x86_64-unknown-linux-gnu /E /NFL /NDL /NJH /NJS
+          if ($LASTEXITCODE -le 7) { $LASTEXITCODE = 0 }
+
           robocopy C:/sysroots/aarch64-unknown-linux-gnu `
             staging/dependencies/sysroots/aarch64-unknown-linux-gnu /E /NFL /NDL /NJH /NJS
+          if ($LASTEXITCODE -le 7) { $LASTEXITCODE = 0 }
  
           # Windows sysroot comes from llvm-mingw (just the MinGW target dir)
           New-Item -ItemType Directory -Force -Path staging/dependencies/sysroots/x86_64-w64-windows-gnu
