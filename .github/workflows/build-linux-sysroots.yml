@@ -1,0 +1,55 @@
+name: Build Linux sysroots
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  build-sysroot:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            triple: x86_64-unknown-linux-gnu
+          - os: ubuntu-22.04-arm
+            triple: aarch64-unknown-linux-gnu
+
+    steps:
+      - name: Install toolchain packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libc6-dev libstdc++-12-dev linux-libc-dev
+
+      - name: Harvest sysroot files
+        run: |
+          mkdir -p sysroot/usr/include sysroot/usr/lib sysroot/lib
+
+          # Headers
+          cp -r /usr/include/* sysroot/usr/include/
+
+          # Core libs needed for linking (static + dynamic)
+          ARCH_LIB_DIR=$(gcc -print-multiarch)
+          mkdir -p sysroot/usr/lib/$ARCH_LIB_DIR sysroot/lib/$ARCH_LIB_DIR
+
+          for lib in libc libm libpthread libdl librt libstdc++ libgcc_s; do
+            find /usr/lib/$ARCH_LIB_DIR /lib/$ARCH_LIB_DIR -maxdepth 1 \
+              -name "${lib}.so*" -o -name "${lib}.a" 2>/dev/null \
+              | xargs -I{} cp -P {} sysroot/usr/lib/$ARCH_LIB_DIR/ 2>/dev/null || true
+          done
+
+          # CRT startup objects
+          find /usr/lib/$ARCH_LIB_DIR /usr/lib/gcc/$ARCH_LIB_DIR -name "crt*.o" \
+            -exec cp {} sysroot/usr/lib/$ARCH_LIB_DIR/ \;
+
+          # Dynamic linker
+          find /lib/$ARCH_LIB_DIR -name "ld-linux*" -exec cp -P {} sysroot/lib/$ARCH_LIB_DIR/ \;
+
+          du -sh sysroot
+
+      - name: Upload sysroot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sysroot-${{ matrix.triple }}
+          path: sysroot
