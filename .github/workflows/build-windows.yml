@@ -130,35 +130,37 @@ jobs:
       - name: Package compiler dependencies
         working-directory: Babel
         run: |
-          mkdir staging/dependencies/clang
-          # copy over clang and clang's dependencies
-          cp C:/llvm-mingw/bin/clang.exe staging/dependencies/clang
-          cp C:/llvm-mingw/bin/clang-22.exe staging/dependencies/clang
-          cp C:/llvm-mingw/bin/ld.lld.exe staging/dependencies/clang
-          cp C:/llvm-mingw/bin/*.dll staging/dependencies/clang
+          mkdir staging/dependencies/lib
+          mkdir staging/dependencies/bin
 
-          # make sure to include the clang licenses
+          # copy over clang and clang's dependencies
+          cp C:/llvm-mingw/bin/clang.exe staging/dependencies/bin/
+          cp C:/llvm-mingw/bin/clang-22.exe staging/dependencies/bin/
+          cp C:/llvm-mingw/bin/ld.lld.exe staging/dependencies/bin/
+          cp C:/llvm-mingw/bin/*.dll staging/dependencies/bin/
+
+          # make sure to include the clang license
           cp C:/llvm-mingw/LICENSE.TXT staging/dependencies/LLVM-LICENSE.TXT
 
           $resourceDir = & "C:/llvm-mingw/bin/clang.exe" --print-resource-dir
-          cp -r $resourceDir staging/dependencies/clang/lib/clang/
+          cp -r $resourceDir staging/dependencies/lib/clang
 
-      - name: Package sysroots
-        working-directory: Babel
-        run: |
-          New-Item -ItemType Directory -Force -Path staging/dependencies/sysroots
-
-          robocopy C:/sysroots/x86_64-unknown-linux-gnu `
-            staging/dependencies/sysroots/x86_64-unknown-linux-gnu /E /NFL /NDL /NJH /NJS
-          if ($LASTEXITCODE -le 7) { $LASTEXITCODE = 0 }
-
-          robocopy C:/sysroots/aarch64-unknown-linux-gnu `
-            staging/dependencies/sysroots/aarch64-unknown-linux-gnu /E /NFL /NDL /NJH /NJS
-          if ($LASTEXITCODE -le 7) { $LASTEXITCODE = 0 }
- 
-          # Windows sysroot comes from llvm-mingw (just the MinGW target dir)
-          New-Item -ItemType Directory -Force -Path staging/dependencies/sysroots/x86_64-w64-windows-gnu
-          cp -r C:/llvm-mingw/x86_64-w64-mingw32 staging/dependencies/sysroots/x86_64-w64-windows-gnu/
+#      - name: Package sysroots
+#        working-directory: Babel
+#        run: |
+#          New-Item -ItemType Directory -Force -Path staging/dependencies/sysroots
+#
+#          robocopy C:/sysroots/x86_64-unknown-linux-gnu `
+#            staging/dependencies/sysroots/x86_64-unknown-linux-gnu /E /NFL /NDL /NJH /NJS
+#          if ($LASTEXITCODE -le 7) { $LASTEXITCODE = 0 }
+#
+#          robocopy C:/sysroots/aarch64-unknown-linux-gnu `
+#            staging/dependencies/sysroots/aarch64-unknown-linux-gnu /E /NFL /NDL /NJH /NJS
+#          if ($LASTEXITCODE -le 7) { $LASTEXITCODE = 0 }
+# 
+#          # Windows sysroot comes from llvm-mingw (just the MinGW target dir)
+#          New-Item -ItemType Directory -Force -Path staging/dependencies/sysroots/x86_64-w64-windows-gnu
+#          cp -r C:/llvm-mingw/x86_64-w64-mingw32 staging/dependencies/sysroots/x86_64-w64-windows-gnu/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

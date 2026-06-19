@@ -103,21 +103,26 @@ jobs:
     - name: Package compiler dependencies
       working-directory: Babel
       run: |
-        mkdir -p staging/dependencies/lib
-        cp $(which clang-20) staging/dependencies
-        cp $(which lld) staging/dependencies
-        cp -r $(clang-20 --print-resource-dir) staging/dependencies/lib/clang/
+        CLANG_BIN=$(which clang-20)
+        LLD_BIN=$(which lld)
+        
+        mkdir -p staging/dependencies/lib staging/dependencies/lib/clang staging/dependencies/bin
+        cp "$CLANG_BIN" staging/dependencies/bin/
+        cp "$LLD_BIN" staging/dependencies/bin/
+
+        RESOURCE_DIR=$("$CLANG_BIN" --print-resource-dir)
+        cp -r "$RESOURCE_DIR" staging/dependencies/lib/clang/20
         # Fetch LLVM license
         wget -q https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-20.1.6/LICENSE.TXT \
         -O staging/dependencies/LLVM-LICENSE.TXT
 
-    - name: Package sysroots
-      working-directory: Babel
-      run: |
-        mkdir -p staging/dependencies/sysroots
-        cp -r ../sysroots/x86_64-unknown-linux-gnu  staging/dependencies/sysroots/
-        cp -r ../sysroots/aarch64-unknown-linux-gnu staging/dependencies/sysroots/
-        cp -r ../sysroots/x86_64-w64-windows-gnu    staging/dependencies/sysroots/
+#    - name: Package sysroots
+#      working-directory: Babel
+#      run: |
+#        mkdir -p staging/dependencies/sysroots
+#        cp -r ../sysroots/x86_64-unknown-linux-gnu  staging/dependencies/sysroots/
+#        cp -r ../sysroots/aarch64-unknown-linux-gnu staging/dependencies/sysroots/
+#        cp -r ../sysroots/x86_64-w64-windows-gnu    staging/dependencies/sysroots/
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
