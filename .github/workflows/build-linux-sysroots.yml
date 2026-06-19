@@ -41,6 +41,11 @@ jobs:
             dpkg-deb -x "$f" extracted/
           done
 
+      - name: Debug - locate libgcc_s
+        run: |
+          find extracted -iname '*libgcc_s*'
+          find extracted -iname '*libgcc*'
+
       - name: Assemble minimal sysroot (symlinks resolved to real files)
         run: |
           set -e
