@@ -65,11 +65,15 @@ jobs:
           cp -L "$LIBDIR_ROOT"/libpthread.so.6 "$SYSROOT/lib/$TRIPLE/" 2>/dev/null || true
           cp -L "$LIBDIR_ROOT"/librt.so.6 "$SYSROOT/lib/$TRIPLE/" 2>/dev/null || true
           find extracted -name 'libgcc_s.so.1' -exec cp -L {} "$SYSROOT/lib/$TRIPLE/" \;
-          find extracted -name 'libgcc_s.so.2' -exec cp -L {} "$SYSROOT/lib/$TRIPLE/" \;
 
           cp -L "$LIBDIR"/libc_nonshared.a "$SYSROOT/usr/lib/$TRIPLE/" 2>/dev/null || true
 
           find extracted/lib* -name 'ld-linux*.so*' -exec cp -L {} "$SYSROOT/lib/$TRIPLE/" \;
+
+          # Also place at /lib64/ld-linux-*.so.2 since that's the hardcoded absolute path
+          # baked into libc.so's linker script (GROUP ... AS_NEEDED ( /lib64/... ))
+          mkdir -p "$SYSROOT/lib64"
+          find extracted/lib* -name 'ld-linux*.so*' -exec cp -L {} "$SYSROOT/lib64/" \;
 
           # Sanity check: confirm nothing in the sysroot is still a symlink
           if find "$SYSROOT" -type l | grep -q .; then
