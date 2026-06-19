@@ -32,7 +32,8 @@ jobs:
           apt-get download \
             libc6:${{ matrix.debarch }} \
             libc6-dev:${{ matrix.debarch }} \
-            linux-libc-dev:${{ matrix.debarch }}
+            linux-libc-dev:${{ matrix.debarch }} \
+            libgcc-s1:${{ matrix.debarch }}
 
       - name: Extract .deb packages
         run: |
