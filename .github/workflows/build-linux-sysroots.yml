@@ -86,11 +86,12 @@ jobs:
       - name: Verify with a smoke-test link
         run: |
           set -e
-          sudo apt-get install -y clang lld libgcc-12-dev
+          sudo apt-get install -y clang lld
           echo 'int main(){return 0;}' > test.c
           clang --target=${{ matrix.triple }} -c test.c -o test.o
           clang -fuse-ld=lld --target=${{ matrix.triple }} \
             --sysroot=$(pwd)/sysroot-${{ matrix.triple }} \
+            -v \
             -o test_exe test.o
           echo "Link succeeded"
           file test_exe
