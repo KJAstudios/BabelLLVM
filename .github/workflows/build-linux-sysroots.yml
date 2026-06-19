@@ -23,6 +23,11 @@ jobs:
       - name: Install dpkg + multiarch support
         run: |
           sudo dpkg --add-architecture ${{ matrix.debarch }}
+          if [ "${{ matrix.debarch }}" = "arm64" ]; then
+            echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main universe" | sudo tee /etc/apt/sources.list.d/arm64-ports.list
+            echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main universe" | sudo tee -a /etc/apt/sources.list.d/arm64-ports.list
+            echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security main universe" | sudo tee -a /etc/apt/sources.list.d/arm64-ports.list
+          fi
           sudo apt-get update
 
       - name: Download required packages (no install, just fetch .deb)
@@ -84,12 +89,6 @@ jobs:
 
           ls -la "$SYSROOT/lib/$TRIPLE" "$SYSROOT/usr/lib/$TRIPLE"
 
-      - name: Debug - sysroot size and file count
-        run: |
-          find sysroot-${{ matrix.triple }} -type f | wc -l
-          du -sh sysroot-${{ matrix.triple }}
-          find sysroot-${{ matrix.triple }} -type f
-          
       - name: Verify with a smoke-test link
         run: |
           set -e
