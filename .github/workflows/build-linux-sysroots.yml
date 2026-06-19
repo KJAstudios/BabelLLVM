@@ -97,16 +97,10 @@ jobs:
           echo "Link succeeded"
           file test_exe
 
-      - name: Package sysroot as zip
-        run: |
-          cd sysroot-${{ matrix.triple }}
-          zip -r ../sysroot-${{ matrix.triple }}.zip .
-          cd ..
-
       - name: Upload sysroot artifact
         uses: actions/upload-artifact@v4
         with:
           name: sysroot-${{ matrix.triple }}
-          path: sysroot-${{ matrix.triple }}.zip
+          path: sysroot-${{ matrix.triple }}
           if-no-files-found: error
           retention-days: 90
