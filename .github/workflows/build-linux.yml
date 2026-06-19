@@ -116,8 +116,9 @@ jobs:
         wget -q https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-20.1.6/LICENSE.TXT \
         -O staging/dependencies/LLVM-LICENSE.TXT
 
+
     - name: Unpack linux sysroots
-      working-directory: staging/dependencies/sysroots
+      working-directory: Babel/staging/dependencies/sysroots
       run: |
         for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu; do
         mkdir -p "$triple"
