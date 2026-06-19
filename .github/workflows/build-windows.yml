@@ -143,8 +143,8 @@ jobs:
           cp C:/llvm-mingw/LICENSE.TXT staging/dependencies/LLVM-LICENSE.TXT
 
           $resourceDir = & "C:/llvm-mingw/bin/clang.exe" --print-resource-dir
-          mkdir staging/dependencies/lib/clang/22
-          cp -r $resourceDir staging/dependencies/lib/clang/22
+          # mkdir staging/dependencies/lib/clang/22
+          cp -r $resourceDir staging/dependencies/lib/clang/
 
 #      - name: Package sysroots
 #        working-directory: Babel
