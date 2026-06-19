@@ -80,7 +80,7 @@ jobs:
       - name: Verify with a smoke-test link
         run: |
           set -e
-          sudo apt-get install -y clang lld
+          sudo apt-get install -y clang lld libgcc-12-dev
           echo 'int main(){return 0;}' > test.c
           clang --target=${{ matrix.triple }} -c test.c -o test.o
           clang -fuse-ld=lld --target=${{ matrix.triple }} \
