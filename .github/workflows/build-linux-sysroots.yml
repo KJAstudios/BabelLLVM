@@ -65,6 +65,7 @@ jobs:
           cp -L "$LIBDIR_ROOT"/libpthread.so.6 "$SYSROOT/lib/$TRIPLE/" 2>/dev/null || true
           cp -L "$LIBDIR_ROOT"/librt.so.6 "$SYSROOT/lib/$TRIPLE/" 2>/dev/null || true
           find extracted -name 'libgcc_s.so.1' -exec cp -L {} "$SYSROOT/lib/$TRIPLE/" \;
+          find extracted -name 'libgcc_s.so.2' -exec cp -L {} "$SYSROOT/lib/$TRIPLE/" \;
 
           cp -L "$LIBDIR"/libc_nonshared.a "$SYSROOT/usr/lib/$TRIPLE/" 2>/dev/null || true
 
