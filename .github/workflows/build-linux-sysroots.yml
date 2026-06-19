@@ -84,6 +84,12 @@ jobs:
 
           ls -la "$SYSROOT/lib/$TRIPLE" "$SYSROOT/usr/lib/$TRIPLE"
 
+      - name: Debug - sysroot size and file count
+        run: |
+          find sysroot-${{ matrix.triple }} -type f | wc -l
+          du -sh sysroot-${{ matrix.triple }}
+          find sysroot-${{ matrix.triple }} -type f
+          
       - name: Verify with a smoke-test link
         run: |
           set -e
