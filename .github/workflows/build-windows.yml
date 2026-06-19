@@ -144,7 +144,7 @@ jobs:
 
           $resourceDir = & "C:/llvm-mingw/bin/clang.exe" --print-resource-dir
           # mkdir staging/dependencies/lib/clang/22
-          cp -r $resourceDir staging/dependencies/lib/clang/
+          cp -r $resourceDir staging/dependencies/lib/clang/22
 
 #      - name: Package sysroots
 #        working-directory: Babel
