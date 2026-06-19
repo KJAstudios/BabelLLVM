@@ -116,13 +116,14 @@ jobs:
         wget -q https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-20.1.6/LICENSE.TXT \
         -O staging/dependencies/LLVM-LICENSE.TXT
 
-#    - name: Package sysroots
-#      working-directory: Babel
-#      run: |
-#        mkdir -p staging/dependencies/sysroots
-#        cp -r ../sysroots/x86_64-unknown-linux-gnu  staging/dependencies/sysroots/
-#        cp -r ../sysroots/aarch64-unknown-linux-gnu staging/dependencies/sysroots/
-#        cp -r ../sysroots/x86_64-w64-windows-gnu    staging/dependencies/sysroots/
+    - name: Unpack linux sysroots
+      working-directory: staging/dependencies/sysroots
+      run: |
+        for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu; do
+        mkdir -p "$triple"
+        unzip -o "${triple}.zip" -d "$triple"
+        rm "${triple}.zip"
+        done
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
