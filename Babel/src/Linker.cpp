@@ -48,7 +48,8 @@ int Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
       RemoveObjectFile(objectFilePath);
       return 1;
     }
-    args.emplace_back("--ld-path=" + GetLLDPath(clangPath));
+    lldPath = "--ld-path=" + lldPath;
+    args.emplace_back(lldPath);
   }
 
   if (!babelArgs.GetSysRoot().empty()) {
