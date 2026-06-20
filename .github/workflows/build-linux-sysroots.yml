@@ -68,11 +68,14 @@ jobs:
 
           find extracted/lib* -name 'ld-linux*.so*' -exec cp -L {} "$SYSROOT/lib/$TRIPLE/" \;
 
-          # Also place at /lib64/ld-linux-*.so.2 (x86_64 only — that's the hardcoded absolute
-          # path baked into libc.so's linker script: GROUP ... AS_NEEDED ( /lib64/... ))
+          # Also place the dynamic linker at the multiarch-free absolute path baked into
+          # libc.so's linker script. x86_64 needs /lib64/...; aarch64 needs
+          # /lib/ld-linux-aarch64.so.1 directly (no multiarch subdir).
           if [ "${{ matrix.arch }}" = "x86_64" ]; then
             mkdir -p "$SYSROOT/lib64"
             find extracted/lib* -name 'ld-linux*.so*' -exec cp -L {} "$SYSROOT/lib64/" \;
+          elif [ "${{ matrix.arch }}" = "aarch64" ]; then
+            find extracted/lib* -name 'ld-linux*.so*' -exec cp -L {} "$SYSROOT/lib/" \;
           fi
 
           # Sanity check: confirm nothing in the sysroot is still a symlink
