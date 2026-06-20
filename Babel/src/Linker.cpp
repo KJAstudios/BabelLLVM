@@ -90,7 +90,7 @@ std::string Linker::GetLibraryFilePath(std::string &executablePath) {
 std::string Linker::GetClangPath(std::string &executablePath) {
   llvm::SmallString<256> exePath(executablePath);
   llvm::sys::path::remove_filename(exePath);
-  llvm::sys::path::append(exePath, "dependencies", "clang");
+  llvm::sys::path::append(exePath, "dependencies", "bin");
 
   llvm::SmallVector<llvm::StringRef, 4> candidates;
 #if defined(_WIN32)
@@ -103,11 +103,14 @@ std::string Linker::GetClangPath(std::string &executablePath) {
   for (auto &name : candidates) {
     llvm::SmallString<256> bundledPath(exePath);
     llvm::sys::path::append(bundledPath, name);
+    std::cerr << "Checking for clang at path: " << bundledPath.str().str() << "\n";
     if (llvm::sys::fs::exists(bundledPath)) {
+      std::cerr << "Clang found.\n";
       return std::string(bundledPath);
     }
   }
 
+  std::cerr << "Clang not found in dependencies\n";
   // check PATH if the dependecy isn't found
   for (auto &name : candidates) {
     auto found = llvm::sys::findProgramByName(name);
