@@ -144,7 +144,7 @@ std::string Linker::GetLLDPath(std::string &clangPath) {
 #if defined(_WIN32)
   lldName = {"ld.lld.exe"};
 #else
-  lldName = {"lld"};
+  lldName = {"ld.lld"};
 #endif
 
   llvm::sys::path::append(lldPath, lldName);

@@ -61,11 +61,11 @@ jobs:
       working-directory: Babel
       run: |
         CLANG_BIN=$(which clang-20)
-        LLD_BIN=$(which lld-20)
+        LLD_BIN=$(which ld.lld-20)
         
         mkdir -p staging/dependencies/lib staging/dependencies/lib/clang staging/dependencies/bin
         cp "$CLANG_BIN" staging/dependencies/bin/
-        cp "$LLD_BIN" staging/dependencies/bin/lld
+        cp "$LLD_BIN" staging/dependencies/bin/ld.lld
 
         RESOURCE_DIR=$("$CLANG_BIN" --print-resource-dir)
         cp -r "$RESOURCE_DIR" staging/dependencies/lib/clang/20
