@@ -8,37 +8,30 @@ on:
 
 jobs:
   build-sysroot:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
         include:
           - arch: x86_64
             triple: x86_64-linux-gnu
             debarch: amd64
+            runner: ubuntu-22.04
           - arch: aarch64
             triple: aarch64-linux-gnu
             debarch: arm64
+            runner: ubuntu-22.04-arm
 
     steps:
-      - name: Install dpkg + multiarch support
-        run: |
-          sudo dpkg --add-architecture ${{ matrix.debarch }}
-          if [ "${{ matrix.debarch }}" = "arm64" ]; then
-            echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main universe" | sudo tee /etc/apt/sources.list.d/arm64-ports.list
-            echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main universe" | sudo tee -a /etc/apt/sources.list.d/arm64-ports.list
-            echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security main universe" | sudo tee -a /etc/apt/sources.list.d/arm64-ports.list
-          fi
-          sudo apt-get update
-
       - name: Download required packages (no install, just fetch .deb)
         run: |
+          sudo apt-get update
           mkdir -p debs
           cd debs
           apt-get download \
-            libc6:${{ matrix.debarch }} \
-            libc6-dev:${{ matrix.debarch }} \
-            linux-libc-dev:${{ matrix.debarch }} \
-            libgcc-s1:${{ matrix.debarch }}
+            libc6 \
+            libc6-dev \
+            linux-libc-dev \
+            libgcc-s1
 
       - name: Extract .deb packages
         run: |
@@ -75,10 +68,12 @@ jobs:
 
           find extracted/lib* -name 'ld-linux*.so*' -exec cp -L {} "$SYSROOT/lib/$TRIPLE/" \;
 
-          # Also place at /lib64/ld-linux-*.so.2 since that's the hardcoded absolute path
-          # baked into libc.so's linker script (GROUP ... AS_NEEDED ( /lib64/... ))
-          mkdir -p "$SYSROOT/lib64"
-          find extracted/lib* -name 'ld-linux*.so*' -exec cp -L {} "$SYSROOT/lib64/" \;
+          # Also place at /lib64/ld-linux-*.so.2 (x86_64 only — that's the hardcoded absolute
+          # path baked into libc.so's linker script: GROUP ... AS_NEEDED ( /lib64/... ))
+          if [ "${{ matrix.arch }}" = "x86_64" ]; then
+            mkdir -p "$SYSROOT/lib64"
+            find extracted/lib* -name 'ld-linux*.so*' -exec cp -L {} "$SYSROOT/lib64/" \;
+          fi
 
           # Sanity check: confirm nothing in the sysroot is still a symlink
           if find "$SYSROOT" -type l | grep -q .; then
@@ -88,6 +83,11 @@ jobs:
           fi
 
           ls -la "$SYSROOT/lib/$TRIPLE" "$SYSROOT/usr/lib/$TRIPLE"
+
+      - name: Debug - sysroot size and file count
+        run: |
+          find sysroot-${{ matrix.triple }} -type f | wc -l
+          du -sh sysroot-${{ matrix.triple }}
 
       - name: Verify with a smoke-test link
         run: |
