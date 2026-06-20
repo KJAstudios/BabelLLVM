@@ -73,10 +73,16 @@ jobs:
           mkdir -p "$SYSROOT/usr/include"
           cp -rL extracted/usr/include/. "$SYSROOT/usr/include/"
 
-          # Merge triple-specific headers (bits/wordsize.h etc.) into the generic include dir
+          # Flatten the entire triple-specific include dir into the generic one,
+          # so multiarch-split headers (bits/, asm/, gnu/, etc.) are all visible
+          # without relying on GCC-style multiarch search-path detection.
           if [ -d "extracted/usr/include/$TRIPLE" ]; then
             cp -rL "extracted/usr/include/$TRIPLE/." "$SYSROOT/usr/include/"
           fi
+
+          # add a 32 bit stub so the build can resolve it
+          mkdir -p "$SYSROOT/usr/include/gnu"
+          touch "$SYSROOT/usr/include/gnu/stubs-32.h"
 
           find extracted/lib* -name 'ld-linux*.so*' -exec cp -L {} "$SYSROOT/lib/$TRIPLE/" \;
 
