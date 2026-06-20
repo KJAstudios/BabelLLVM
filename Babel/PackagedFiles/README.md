@@ -4,13 +4,30 @@ Babel is inspired by the story of the Tower of Babel in the Bible, and [APL (A P
 
 The idea behind the language is that it should mostly look like average code, but with every keyword being in a different language, and every control and operator character different from the standard characters used in most programming languages.
 
+## Example Program
+```
+funkcjonować ⟅⟆ 主要的꧁
+  x ≔ 1 ⊕ 1~
+  y ≔ 2 ⊖ 1~
+  əgər⟅x ≺ y⟆꧁
+    tisk⟅x⟆~
+  ꧂
+  それ以外꧁
+    tisk⟅y⟆~
+  ꧂
+꧂
+```
+This prints `2` if `x < y`, otherwise prints `1`.
+
+## Example
+The above example is included in the Examples folder as example.bbl. To build and run the example, use `./babel Examples/example.bbl` for linux, or `./babel.exe Examples/example.bbl` for windows.
+
 ---
 
-## Building & Debugging
+## Compiling Babel Programs
 
-Babel compiles to a native executable via Clang (required). Currently supported target architectures are **aarch64** and **x86**.
-
-Compiled programs can be debugged with LLDB.
+The Babel compiler works as a commmand line interface to compile. All source code files must have the .bbl file extension in order to be considered a valid source file. Babel can be debugged using lldb.
+Usage: `./babel <.bbl source file> [OPTIONS]`
 
 ### Command Line Arguments
 
@@ -114,18 +131,3 @@ Comments are single lines beginning with `✎`
 > **Note:** Loops and return values are not yet defined.
 
 ---
-
-## Example Program
-```
-funkcjonować ⟅⟆ 主要的꧁
-  x ≔ 1 ⊕ 1~
-  y ≔ 2 ⊖ 1~
-  əgər⟅x ≺ y⟆꧁
-    tisk⟅x⟆~
-  ꧂
-  それ以外꧁
-    tisk⟅y⟆~
-  ꧂
-꧂
-```
-This prints `2` if `x < y`, otherwise prints `1`.
