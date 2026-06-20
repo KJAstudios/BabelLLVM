@@ -24,8 +24,10 @@ int Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
     return 1;
   }
 
+  // define before the args declaration to avoid bad memory due to how StringRef works
   std::string target;
   std::string sysroot;
+  std::string lldPath;
   std::vector<llvm::StringRef> args = {clangPath,
                                        objectFilePath,
                                        libraryFilePath,
@@ -40,7 +42,7 @@ int Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
     args.emplace_back(target);
 
     // if a custom target is defined, ensure we use the bundled lld
-    std::string lldPath = GetLLDPath(clangPath);
+    lldPath = GetLLDPath(clangPath);
     if(lldPath.empty()){
       std::cerr << "Error: lld not found.\n";
       RemoveObjectFile(objectFilePath);
