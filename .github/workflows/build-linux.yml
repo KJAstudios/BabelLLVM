@@ -30,50 +30,7 @@ jobs:
 
     - name: Install dependencies
       run: | 
-        sudo apt-get install -y build-essential ninja-build cmake ccache llvm-20-dev clang-20 lld llvm-20
-
-    # get sysroots
-    - name: Cache sysroots
-      id: cache-sysroots
-      uses: actions/cache/restore@v4
-      with:
-        path: sysroots
-        key: sysroots-linux-v1
-
-    - name: Download Linux x86-64 sysroot
-      if: steps.cache-sysroots.outputs.cache-hit != 'true'
-      run: |
-        mkdir -p sysroots/x86_64-unknown-linux-gnu
-        wget -q https://commondatastorage.googleapis.com/chrome-linux-sysroot/toolchain/4f611ec025be98214164d4bf9fbe8843f58533f7/debian_bullseye_amd64_sysroot.tar.xz \
-          -O /tmp/sysroot-x86_64.tar.xz
-        tar -xf /tmp/sysroot-x86_64.tar.xz -C sysroots/x86_64-unknown-linux-gnu
- 
-    - name: Download Linux ARM64 sysroot
-      if: steps.cache-sysroots.outputs.cache-hit != 'true'
-      run: |
-        mkdir -p sysroots/aarch64-unknown-linux-gnu
-        wget -q https://commondatastorage.googleapis.com/chrome-linux-sysroot/toolchain/906cc7c6bf47d4bd969a3221fc0602c6b3153caa/debian_bullseye_arm64_sysroot.tar.xz \
-          -O /tmp/sysroot-arm64.tar.xz
-        tar -xf /tmp/sysroot-arm64.tar.xz -C sysroots/aarch64-unknown-linux-gnu
- 
-    - name: Download llvm-mingw (MinGW sysroot for Windows target)
-      if: steps.cache-sysroots.outputs.cache-hit != 'true'
-      run: |
-        mkdir -p sysroots/x86_64-w64-windows-gnu
-        wget -q https://github.com/mstorsjo/llvm-mingw/releases/download/20260602/llvm-mingw-20260602-ucrt-ubuntu-22.04-x86_64.tar.xz \
-          -O /tmp/llvm-mingw.tar.xz
-        mkdir -p /tmp/llvm-mingw-full
-        # Extract only the sysroot portions (headers + CRT), not the compiler tools
-        tar -xf /tmp/llvm-mingw.tar.xz -C /tmp/llvm-mingw-full --strip-components=1
-        cp -r /tmp/llvm-mingw-full/x86_64-w64-mingw32 sysroots/x86_64-w64-windows-gnu/
-        cp /tmp/llvm-mingw-full/LICENSE.TXT sysroots/x86_64-w64-windows-gnu/
-    
-    - name: Save sysroots cache
-      if: steps.cache-sysroots.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
-      with:
-        path: sysroots
-        key: sysroots-linux-v1
+        sudo apt-get install -y build-essential ninja-build cmake ccache llvm-20-dev clang-20 lld-20 llvm-20
 
     # build
 
@@ -104,11 +61,11 @@ jobs:
       working-directory: Babel
       run: |
         CLANG_BIN=$(which clang-20)
-        LLD_BIN=$(which lld)
+        LLD_BIN=$(which lld-20)
         
         mkdir -p staging/dependencies/lib staging/dependencies/lib/clang staging/dependencies/bin
         cp "$CLANG_BIN" staging/dependencies/bin/
-        cp "$LLD_BIN" staging/dependencies/bin/
+        cp "$LLD_BIN" staging/dependencies/bin/lld
 
         RESOURCE_DIR=$("$CLANG_BIN" --print-resource-dir)
         cp -r "$RESOURCE_DIR" staging/dependencies/lib/clang/20
