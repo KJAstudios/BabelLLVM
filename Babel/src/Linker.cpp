@@ -50,6 +50,12 @@ int Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
     args.emplace_back(sysroot);
   }
 
+  std::cerr << "Clang Args: ";
+  for(auto arg : args){
+    std::cerr << arg.str() << " ";
+  }
+  std::cerr << '\n';
+
   std::string errorMessage;
   int result = llvm::sys::ExecuteAndWait(clangPath, args, std::nullopt, {}, 0,
                                          0, &errorMessage);
