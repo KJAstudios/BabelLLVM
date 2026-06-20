@@ -120,7 +120,7 @@ jobs:
     - name: Unpack linux sysroots
       working-directory: Babel/staging/dependencies/sysroots
       run: |
-        for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu; do
+        for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-w64-windows-gnu; do
         mkdir -p "$triple"
         unzip -o "${triple}.zip" -d "$triple"
         rm "${triple}.zip"

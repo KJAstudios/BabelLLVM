@@ -116,7 +116,7 @@ jobs:
         working-directory: Babel\staging\dependencies\sysroots
         shell: pwsh
         run: |
-          foreach ($triple in "x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu") {
+          foreach ($triple in "x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-w64-windows-gnu") {
               New-Item -ItemType Directory -Force -Path $triple | Out-Null
               Expand-Archive -Path "$triple.zip" -DestinationPath $triple -Force
               Remove-Item "$triple.zip"
