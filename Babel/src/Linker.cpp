@@ -50,6 +50,10 @@ int Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
     }
     lldPath = "--ld-path=" + lldPath;
     args.emplace_back(lldPath);
+
+    // ensure lld uses the included runtime library
+    args.emplace_back("-rtlib=compiler-rt");
+    args.emplace_back("--unwindlib=compiler-rt");
   }
 
   if (!babelArgs.GetSysRoot().empty()) {
