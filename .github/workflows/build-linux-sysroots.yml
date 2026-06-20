@@ -69,6 +69,10 @@ jobs:
 
           cp -L "$LIBDIR"/libc_nonshared.a "$SYSROOT/usr/lib/$TRIPLE/" 2>/dev/null || true
 
+          # copy the include so we can build the compiler-rt for this
+          mkdir -p "$SYSROOT/usr/include"
+          cp -rL extracted/usr/include/. "$SYSROOT/usr/include/"
+
           find extracted/lib* -name 'ld-linux*.so*' -exec cp -L {} "$SYSROOT/lib/$TRIPLE/" \;
 
           # Also place the dynamic linker at the multiarch-free absolute path baked into
@@ -131,6 +135,7 @@ jobs:
           SYSROOT=sysroot-x86_64-w64-mingw32
           mkdir -p "$SYSROOT"
           cp -rL "$MINGW_DIR/x86_64-w64-mingw32/lib" "$SYSROOT/lib"
+          cp -rL "$MINGW_DIR/x86_64-w64-mingw32/include" "$SYSROOT/include"
 
           # Sanity check: confirm nothing in the sysroot is still a symlink
           if find "$SYSROOT" -type l | grep -q .; then
