@@ -38,6 +38,15 @@ int Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
   if (targetDefined) {
     target = "--target=" + babelArgs.GetTargetTriple();
     args.emplace_back(target);
+
+    // if a custom target is defined, ensure we use the bundled lld
+    std::string lldPath = GetLLDPath(clangPath);
+    if(lldPath.empty()){
+      std::cerr << "Error: lld not found.\n";
+      RemoveObjectFile(objectFilePath);
+      return 1;
+    }
+    args.emplace_back("--ld-path=" + GetLLDPath(clangPath));
   }
 
   if (!babelArgs.GetSysRoot().empty()) {
@@ -45,13 +54,14 @@ int Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
     args.emplace_back(sysroot);
   }
   // default to the packaged dependencies if a target is provided and no sysroot
-  else if(targetDefined){
-    sysroot = "--sysroot=" + GetSysrootPath(executablePath, babelArgs.GetTargetTriple());
+  else if (targetDefined) {
+    sysroot = "--sysroot=" +
+              GetSysrootPath(executablePath, babelArgs.GetTargetTriple());
     args.emplace_back(sysroot);
   }
 
   std::cerr << "Clang Args: ";
-  for(auto arg : args){
+  for (auto arg : args) {
     std::cerr << arg.str() << " ";
   }
   std::cerr << '\n';
@@ -103,7 +113,8 @@ std::string Linker::GetClangPath(std::string &executablePath) {
   for (auto &name : candidates) {
     llvm::SmallString<256> bundledPath(exePath);
     llvm::sys::path::append(bundledPath, name);
-    std::cerr << "Checking for clang at path: " << bundledPath.str().str() << "\n";
+    std::cerr << "Checking for clang at path: " << bundledPath.str().str()
+              << "\n";
     if (llvm::sys::fs::exists(bundledPath)) {
       std::cerr << "Clang found.\n";
       return std::string(bundledPath);
@@ -117,6 +128,34 @@ std::string Linker::GetClangPath(std::string &executablePath) {
     if (found) {
       return *found;
     }
+  }
+
+  return "";
+}
+
+std::string Linker::GetLLDPath(std::string &clangPath) {
+  llvm::SmallString<256> lldPath(clangPath);
+  llvm::sys::path::remove_filename(lldPath);
+
+  llvm::StringRef lldName;
+#if defined(_WIN32)
+  lldName = {"ld.lld.exe"};
+#else
+  lldName = {"lld"};
+#endif
+
+  llvm::sys::path::append(lldPath, lldName);
+  std::cerr << "Checking for lld at path: " << lldPath.str().str() << "\n";
+  if (llvm::sys::fs::exists(lldPath)) {
+    std::cerr << "lld found.\n";
+    return std::string(lldPath);
+  }
+
+  std::cerr << "lld not found in dependencies\n";
+  // check PATH if the dependecy isn't found
+  auto found = llvm::sys::findProgramByName(lldName);
+  if (found) {
+    return *found;
   }
 
   return "";
