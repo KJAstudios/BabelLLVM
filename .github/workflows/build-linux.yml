@@ -9,9 +9,8 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
-      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
       fail-fast: false
-      
+
       matrix:
         include:
           - os: ubuntu-22.04
@@ -22,15 +21,100 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Add LLVM apt repository
-      run: |
-          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-          sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-20 main"
-          sudo apt-get update
+    - name: Install build dependencies
+      run: sudo apt-get install -y ninja-build cmake build-essential python3
 
-    - name: Install dependencies
-      run: | 
-        sudo apt-get install -y build-essential ninja-build cmake ccache llvm-20-dev clang-20 lld-20 llvm-20
+    - name: Unpack linux sysroots
+      working-directory: Babel/PackagedFiles/dependencies/sysroots
+      run: |
+        for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-w64-windows-gnu; do
+          mkdir -p "$triple"
+          unzip -o "${triple}.zip" -d "$triple"
+          rm "${triple}.zip"
+        done
+
+
+    # /opt is root-owned; give the runner write access before cache restore tries to extract there
+    - name: Prepare LLVM install directory
+      run: sudo mkdir -p /opt/llvm && sudo chown $(id -u):$(id -g) /opt/llvm
+
+    - name: Cache LLVM build
+      id: cache-llvm
+      uses: actions/cache/restore@v4
+      with:
+        path: /opt/llvm
+        key: llvm-20.1.6-linux-${{ matrix.arch }}-v1
+
+    # build and cache llvm, since the downloads don't contain the necessary cmake files
+    - name: Checkout LLVM
+      if: steps.cache-llvm.outputs.cache-hit != 'true'
+      uses: actions/checkout@v4
+      with:
+        repository: llvm/llvm-project
+        ref: llvmorg-20.1.6
+        path: llvm-project
+        sparse-checkout: |
+          llvm
+          clang
+          lld
+          compiler-rt
+          cmake
+
+    - name: Build LLVM, Clang, and LLD
+      if: steps.cache-llvm.outputs.cache-hit != 'true'
+      run: |
+        cmake -S llvm-project/llvm -B llvm-build -G Ninja \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_INSTALL_PREFIX=/opt/llvm \
+          -DLLVM_TARGETS_TO_BUILD="X86;AArch64" \
+          -DLLVM_ENABLE_PROJECTS="clang;lld" \
+          -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++" \
+          -DLLVM_INCLUDE_TESTS=OFF \
+          -DLLVM_INCLUDE_EXAMPLES=OFF \
+          -DLLVM_INCLUDE_BENCHMARKS=OFF \
+          -DLLVM_INCLUDE_DOCS=OFF
+        cmake --build llvm-build --parallel
+        cmake --install llvm-build
+
+    - name: Build compiler-rt builtins for cross targets
+      if: steps.cache-llvm.outputs.cache-hit != 'true'
+      run: |
+        for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-w64-windows-gnu; do
+          case "$triple" in
+            *linux*)   system="Linux"   ;;
+            *windows*) system="Windows" ;;
+          esac
+          cmake -S llvm-project/compiler-rt -B "compiler-rt-$triple" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/opt/llvm \
+            -DCMAKE_C_COMPILER=/opt/llvm/bin/clang \
+            -DCMAKE_ASM_COMPILER=/opt/llvm/bin/clang \
+            -DCMAKE_C_COMPILER_TARGET="$triple" \
+            -DCMAKE_ASM_COMPILER_TARGET="$triple" \
+            -DCMAKE_AR=/opt/llvm/bin/llvm-ar \
+            -DCMAKE_NM=/opt/llvm/bin/llvm-nm \
+            -DCMAKE_RANLIB=/opt/llvm/bin/llvm-ranlib \
+            -DCMAKE_SYSTEM_NAME="$system" \
+            -DCMAKE_SYSROOT="$GITHUB_WORKSPACE/Babel/PackagedFiles/dependencies/sysroots/$triple" \
+            -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY \
+            -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON \
+            -DCOMPILER_RT_BUILD_BUILTINS=ON \
+            -DCOMPILER_RT_BUILD_SANITIZERS=OFF \
+            -DCOMPILER_RT_BUILD_XRAY=OFF \
+            -DCOMPILER_RT_BUILD_LIBFUZZER=OFF \
+            -DCOMPILER_RT_BUILD_PROFILE=OFF \
+            -DCOMPILER_RT_BUILD_MEMPROF=OFF \
+            -DCOMPILER_RT_BUILD_ORC=OFF 
+          cmake --build "compiler-rt-$triple" --parallel
+          cmake --install "compiler-rt-$triple"
+        done
+
+    - name: Save LLVM cache
+      if: steps.cache-llvm.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: /opt/llvm
+        key: llvm-20.1.6-linux-${{ matrix.arch }}-v1
 
     # build
 
@@ -39,19 +123,12 @@ jobs:
       run: |
         cmake -B build -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
-        -DLLVM_DIR=/usr/lib/llvm-20/lib/cmake/llvm \
+        -DLLVM_DIR=/opt/llvm/lib/cmake/llvm \
         -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++"
 
     - name: Build
       working-directory: Babel
-      run: cmake --build build --parallel 
-
-    - name: Debug output
-      run: |
-        echo "=== Babel/build contents ==="
-        find Babel/build -type f -name "babel-llvm"
-        echo "=== Babel/staging contents ==="
-        find Babel/staging -type f 2>/dev/null || echo "staging not found"
+      run: cmake --build build --parallel
 
     - name: Install
       working-directory: Babel
@@ -60,28 +137,24 @@ jobs:
     - name: Package compiler dependencies
       working-directory: Babel
       run: |
-        CLANG_BIN=$(which clang-20)
-        LLD_BIN=$(which ld.lld-20)
-        
-        mkdir -p staging/dependencies/lib staging/dependencies/lib/clang staging/dependencies/bin
-        cp "$CLANG_BIN" staging/dependencies/bin/
-        cp "$LLD_BIN" staging/dependencies/bin/ld.lld
+        mkdir -p staging/dependencies/lib staging/dependencies/bin
 
-        RESOURCE_DIR=$("$CLANG_BIN" --print-resource-dir)
-        cp -r "$RESOURCE_DIR" staging/dependencies/lib/clang/20
+        cp /opt/llvm/bin/clang staging/dependencies/bin/
+        cp /opt/llvm/bin/clang-20 staging/dependencies/bin/
+        cp /opt/llvm/bin/ld.lld staging/dependencies/bin/
+        cp /opt/llvm/bin/llvm-ar staging/dependencies/bin/
+        cp /opt/llvm/bin/llvm-nm staging/dependencies/bin/
+        cp /opt/llvm/bin/llvm-ranlib staging/dependencies/bin/
+        cp /opt/llvm/bin/llvm-objcopy staging/dependencies/bin/
+
         # Fetch LLVM license
         wget -q https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-20.1.6/LICENSE.TXT \
-        -O staging/dependencies/LLVM-LICENSE.TXT
+          -O staging/dependencies/LLVM-LICENSE.TXT
 
-
-    - name: Unpack linux sysroots
-      working-directory: Babel/staging/dependencies/sysroots
-      run: |
-        for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-w64-windows-gnu; do
-        mkdir -p "$triple"
-        unzip -o "${triple}.zip" -d "$triple"
-        rm "${triple}.zip"
-        done
+        # copy the clang resource dir — includes compiler-rt builtins for all cross targets
+        RESOURCE_DIR=$(/opt/llvm/bin/clang --print-resource-dir)
+        mkdir -p staging/dependencies/lib/clang
+        cp -r "$RESOURCE_DIR" staging/dependencies/lib/clang/20
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4

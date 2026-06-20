@@ -10,12 +10,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Unpack sysroots
+        working-directory: Babel\PackagedFiles\dependencies\sysroots
+        shell: pwsh
+        run: |
+          foreach ($triple in "x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-w64-windows-gnu") {
+              New-Item -ItemType Directory -Force -Path $triple | Out-Null
+              Expand-Archive -Path "$triple.zip" -DestinationPath $triple -Force
+              Remove-Item "$triple.zip"
+          }
+
       - name: Cache LLVM build
         id: cache-llvm
         uses: actions/cache/restore@v4
         with:
           path: C:/LLVM
-          key: llvm-20.1.6-windows-x64-v1
+          key: llvm-20.1.6-windows-x64-v2
 
       # build and cache llvm, since the downloads don't contain the necessary cmake files
       - name: Checkout LLVM
@@ -27,16 +37,20 @@ jobs:
           path: llvm-project
           sparse-checkout: |
             llvm
+            clang
+            lld
+            compiler-rt
             cmake
 
-      - name: Build LLVM
+      - name: Build LLVM, Clang, and LLD
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         run: |
           cmake -S llvm-project/llvm -B llvm-build -G Ninja `
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_INSTALL_PREFIX="C:/LLVM" `
             -DLLVM_TARGETS_TO_BUILD="X86;AArch64" `
-            -DLLVM_ENABLE_PROJECTS="" `
+            -DLLVM_ENABLE_PROJECTS="clang;lld" `
+            -DLLVM_USE_CRT_RELEASE=MT `
             -DLLVM_INCLUDE_TESTS=OFF `
             -DLLVM_INCLUDE_EXAMPLES=OFF `
             -DLLVM_INCLUDE_BENCHMARKS=OFF `
@@ -44,39 +58,48 @@ jobs:
           cmake --build llvm-build --config Release --parallel
           cmake --install llvm-build --config Release
 
+      - name: Build compiler-rt builtins for cross targets
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        run: |
+          $targets = @(
+            @{ triple = "x86_64-unknown-linux-gnu"; system = "Linux" },
+            @{ triple = "aarch64-unknown-linux-gnu"; system = "Linux" },
+            @{ triple = "x86_64-w64-windows-gnu"; system = "Windows" }
+          )
+          foreach ($t in $targets) {
+            $triple = $t.triple
+            $system = $t.system
+            cmake -S llvm-project/compiler-rt -B "compiler-rt-$triple" -G Ninja `
+              -DCMAKE_BUILD_TYPE=Release `
+              -DCMAKE_INSTALL_PREFIX="C:/LLVM" `
+              -DCMAKE_C_COMPILER="C:/LLVM/bin/clang.exe" `
+              -DCMAKE_ASM_COMPILER="C:/LLVM/bin/clang.exe" `
+              -DCMAKE_C_COMPILER_TARGET="$triple" `
+              -DCMAKE_ASM_COMPILER_TARGET="$triple" `
+              -DCMAKE_AR="C:/LLVM/bin/llvm-ar.exe" `
+              -DCMAKE_NM="C:/LLVM/bin/llvm-nm.exe" `
+              -DCMAKE_RANLIB="C:/LLVM/bin/llvm-ranlib.exe" `
+              -DCMAKE_SYSTEM_NAME="$system" `
+              -DCMAKE_SYSROOT="$env:GITHUB_WORKSPACE/Babel/PackagedFiles/dependencies/sysroots/$triple" `
+              -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY `
+              -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON `
+              -DCOMPILER_RT_BUILD_BUILTINS=ON `
+              -DCOMPILER_RT_BUILD_SANITIZERS=OFF `
+              -DCOMPILER_RT_BUILD_XRAY=OFF `
+              -DCOMPILER_RT_BUILD_LIBFUZZER=OFF `
+              -DCOMPILER_RT_BUILD_PROFILE=OFF `
+              -DCOMPILER_RT_BUILD_MEMPROF=OFF `
+              -DCOMPILER_RT_BUILD_ORC=OFF
+            cmake --build "compiler-rt-$triple" --config Release --parallel
+            cmake --install "compiler-rt-$triple" --config Release
+          }
 
       - name: Save LLVM cache
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: C:/LLVM
-          key: llvm-20.1.6-windows-x64-v1
-
-      - name: Cache llvm-mingw
-        id: cache-llvm-mingw
-        uses: actions/cache/restore@v4
-        with: 
-          path: C:/llvm-mingw
-          key: llvm-mingw-20260602
-      
-      # cache llvm-mingw for clang/build dependencies
-      - name: Download llvm-mingw
-        if: steps.cache-llvm-mingw.outputs.cache-hit != 'true'
-        run: |
-          $url = "https://github.com/mstorsjo/llvm-mingw/releases/download/20260602/llvm-mingw-20260602-ucrt-x86_64.zip"
-          Invoke-WebRequest $url -OutFile llvm-mingw.zip
-          Expand-Archive llvm-mingw.zip -DestinationPath C:/llvm-mingw-tmp
-          # Move the inner versioned folder up so bin/ is directly at C:/llvm-mingw/bin/
-          $inner = Get-ChildItem C:/llvm-mingw-tmp | Select-Object -First 1
-          Move-Item $inner.FullName C:/llvm-mingw
-          Remove-Item C:/llvm-mingw-tmp
-
-      - name: Save llvm-mingw cache
-        if: steps.cache-llvm-mingw.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: C:/llvm-mingw
-          key: llvm-mingw-20260602
+          key: llvm-20.1.6-windows-x64-v2
 
       # build
 
@@ -100,27 +123,23 @@ jobs:
           mkdir staging/dependencies/lib
           mkdir staging/dependencies/bin
 
-          # copy over clang and clang's dependencies
-          cp C:/llvm-mingw/bin/clang.exe staging/dependencies/bin/
-          cp C:/llvm-mingw/bin/clang-22.exe staging/dependencies/bin/
-          cp C:/llvm-mingw/bin/ld.lld.exe staging/dependencies/bin/
-          cp C:/llvm-mingw/bin/*.dll staging/dependencies/bin/
+          # copy clang, lld, and essential LLVM tools (statically linked, no DLL deps)
+          cp C:/LLVM/bin/clang.exe staging/dependencies/bin/
+          cp C:/LLVM/bin/clang-20.exe staging/dependencies/bin/
+          cp C:/LLVM/bin/ld.lld.exe staging/dependencies/bin/
+          cp C:/LLVM/bin/llvm-ar.exe staging/dependencies/bin/
+          cp C:/LLVM/bin/llvm-nm.exe staging/dependencies/bin/
+          cp C:/LLVM/bin/llvm-ranlib.exe staging/dependencies/bin/
+          cp C:/LLVM/bin/llvm-objcopy.exe staging/dependencies/bin/
 
-          # make sure to include the clang license
-          cp C:/llvm-mingw/LICENSE.TXT staging/dependencies/LLVM-LICENSE.TXT
+          # fetch the LLVM license
+          $licenseUrl = "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-20.1.6/LICENSE.TXT"
+          Invoke-WebRequest $licenseUrl -OutFile staging/dependencies/LLVM-LICENSE.TXT
 
-          $resourceDir = & "C:/llvm-mingw/bin/clang.exe" --print-resource-dir
-          cp -r $resourceDir staging/dependencies/lib/clang/22
-
-      - name: Unpack linux sysroots
-        working-directory: Babel\staging\dependencies\sysroots
-        shell: pwsh
-        run: |
-          foreach ($triple in "x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-w64-windows-gnu") {
-              New-Item -ItemType Directory -Force -Path $triple | Out-Null
-              Expand-Archive -Path "$triple.zip" -DestinationPath $triple -Force
-              Remove-Item "$triple.zip"
-          }
+          # copy the clang resource dir — includes compiler-rt builtins for all cross targets
+          $resourceDir = & "C:/LLVM/bin/clang.exe" --print-resource-dir
+          New-Item -ItemType Directory -Force -Path staging/dependencies/lib/clang | Out-Null
+          cp -r $resourceDir staging/dependencies/lib/clang/20
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -128,5 +147,5 @@ jobs:
           name: babel-windows-x64
           path: Babel/staging
 
-      
+
 
