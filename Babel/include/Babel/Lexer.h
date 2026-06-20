@@ -1,13 +1,14 @@
 #ifndef BABEL_LEXER_H
 #define BABEL_LEXER_H
 #include "Babel/TokenData.h"
+#include <array>
 #include <llvm/ADT/StringRef.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <memory>
 #include <string>
 
-
 namespace Babel {
+
 class Lexer {
 private:
   // core input buffer
@@ -20,6 +21,10 @@ private:
 
   // helper control variables
   unsigned offset;
+  constexpr static std::array<std::string, 6> ControlCharacters = {
+      "~", "꧁", "꧂", "⟅", "⟆", "᨞"};
+  constexpr static std::array<std::string, 11> OperatorCharacters = {
+      "⊕", "⊖", "×", "÷", "≔", "≺", "≻", "≼", "≽", "≡", "≠"};
 
 public:
   Babel::TokenData GetNextToken();
