@@ -41,6 +41,7 @@ jobs:
             lld
             compiler-rt
             cmake
+            libunwind
 
       - name: Build LLVM, Clang, and LLD
         if: steps.cache-llvm.outputs.cache-hit != 'true'
