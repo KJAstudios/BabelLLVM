@@ -81,6 +81,7 @@ jobs:
     - name: Build compiler-rt builtins for cross targets
       if: steps.cache-llvm.outputs.cache-hit != 'true'
       run: |
+        set -e
         for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-w64-windows-gnu; do
           case "$triple" in
             *linux*)   system="Linux"   ;;
@@ -114,6 +115,7 @@ jobs:
     - name: Build libunwind for cross targets
       if: steps.cache-llvm.outputs.cache-hit != 'true'
       run: |
+        set -e
         for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-w64-windows-gnu; do
           case "$triple" in
             *linux*)   system="Linux"   ;;
@@ -190,15 +192,18 @@ jobs:
         wget -q https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-20.1.6/LICENSE.TXT \
           -O staging/dependencies/LLVM-LICENSE.TXT
 
-        # copy the clang resource dir — includes compiler-rt builtins for all cross targets
+        # copy the clang resource dir (headers etc.)
         RESOURCE_DIR=$(/opt/llvm/bin/clang --print-resource-dir)
         mkdir -p staging/dependencies/lib/clang
         cp -r "$RESOURCE_DIR" staging/dependencies/lib/clang/20
 
-        # copy libunwind static libs per triple (not part of the resource dir, install separately)
+        # copy builtins + libunwind per triple from their actual LLVM_ENABLE_PER_TARGET_RUNTIME_DIR location
         for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-w64-windows-gnu; do
           mkdir -p "staging/dependencies/lib/clang/20/lib/$triple"
-          find /opt/llvm -path "*$triple*" -name "libunwind.a" -exec cp {} "staging/dependencies/lib/clang/20/lib/$triple/" \;
+          [ -f "/opt/llvm/lib/$triple/libclang_rt.builtins.a" ] && \
+            cp "/opt/llvm/lib/$triple/libclang_rt.builtins.a" "staging/dependencies/lib/clang/20/lib/$triple/"
+          [ -f "/opt/llvm/lib/$triple/libunwind.a" ] && \
+            cp "/opt/llvm/lib/$triple/libunwind.a" "staging/dependencies/lib/clang/20/lib/$triple/"
         done
 
     - name: Upload artifact
