@@ -36,7 +36,8 @@ jobs:
             libc6 \
             libc6-dev \
             linux-libc-dev \
-            libgcc-s1
+            libgcc-s1 \
+            libgcc-12-dev
 
       - name: Extract .deb packages
         run: |
@@ -68,6 +69,11 @@ jobs:
           cp -L "$LIBDIR_ROOT"/libpthread.so.6 "$SYSROOT/lib/$TRIPLE/" 2>/dev/null || true
           cp -L "$LIBDIR_ROOT"/librt.so.6 "$SYSROOT/lib/$TRIPLE/" 2>/dev/null || true
           find extracted -name 'libgcc_s.so.1' -exec cp -L {} "$SYSROOT/lib/$TRIPLE/" \;
+
+          # crt startup objects + static libgcc, from libgcc-12-dev
+          find extracted/usr/lib/gcc -name 'crtbegin*.o' -o -name 'crtend*.o' -o -name 'libgcc.a' | while read f; do
+            cp -L "$f" "$SYSROOT/usr/lib/$TRIPLE/"
+          done
 
           cp -L "$LIBDIR"/libc_nonshared.a "$SYSROOT/usr/lib/$TRIPLE/" 2>/dev/null || true
 
