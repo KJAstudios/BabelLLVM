@@ -109,8 +109,8 @@ jobs:
 
       - name: Debug - sysroot size and file count
         run: |
-          find sysroot-${{ matrix.triple }} -type f | wc -l
-          du -sh sysroot-${{ matrix.triple }}
+          find sysroot-${{ matrix.target_triple }} -type f | wc -l
+          du -sh sysroot-${{ matrix.target_triple }}
 
       - name: Verify with a smoke-test link
         run: |
@@ -119,7 +119,7 @@ jobs:
           echo 'int main(){return 0;}' > test.c
           clang --target=${{ matrix.triple }} -c test.c -o test.o
           clang -fuse-ld=lld --target=${{ matrix.triple }} \
-            --sysroot=$(pwd)/sysroot-${{ matrix.triple }} \
+            --sysroot=$(pwd)/sysroot-${{ matrix.target_triple }} \
             -v \
             -o test_exe test.o
           echo "Link succeeded"
@@ -141,7 +141,7 @@ jobs:
           wget -q "https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz"
           tar -xf "llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz"
 
-      - name: Assemble mingw sysroot (lib only, no headers)
+      - name: Assemble mingw sysroot (lib + headers)
         run: |
           set -e
           MINGW_DIR=$(find . -maxdepth 1 -name 'llvm-mingw-*' -type d | head -1)
