@@ -99,7 +99,7 @@ jobs:
             -DCMAKE_SYSTEM_NAME="$system" \
             -DCMAKE_SYSROOT="$GITHUB_WORKSPACE/Babel/PackagedFiles/dependencies/sysroots/$triple" \
             -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY \
-            -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON \
+            -DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=ON \
             -DCOMPILER_RT_BUILD_BUILTINS=ON \
             -DCOMPILER_RT_BUILD_SANITIZERS=OFF \
             -DCOMPILER_RT_BUILD_XRAY=OFF \
@@ -131,6 +131,7 @@ jobs:
             -DCMAKE_SYSTEM_NAME="$system" \
             -DCMAKE_SYSROOT="$GITHUB_WORKSPACE/Babel/PackagedFiles/dependencies/sysroots/$triple" \
             -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY \
+            -DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=ON \
             -DLLVM_ENABLE_RUNTIMES=libunwind \
             -DLIBUNWIND_ENABLE_SHARED=OFF \
             -DLIBUNWIND_ENABLE_STATIC=ON \
