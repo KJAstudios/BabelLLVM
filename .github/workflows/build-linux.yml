@@ -43,7 +43,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: /opt/llvm
-        key: llvm-20.1.6-linux-${{ matrix.arch }}-v1
+        key: llvm-20.1.6-linux-${{ matrix.arch }}-v2
 
     # build and cache llvm, since the downloads don't contain the necessary cmake files
     - name: Checkout LLVM
@@ -60,6 +60,7 @@ jobs:
           compiler-rt
           cmake
           libunwind
+          runtimes
 
     - name: Build LLVM, Clang, and LLD
       if: steps.cache-llvm.outputs.cache-hit != 'true'
@@ -68,7 +69,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release \
           -DCMAKE_INSTALL_PREFIX=/opt/llvm \
           -DLLVM_TARGETS_TO_BUILD="X86;AArch64" \
-          -DLLVM_ENABLE_PROJECTS="clang;lld;libunwind" \
+          -DLLVM_ENABLE_PROJECTS="clang;lld" \
           -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++" \
           -DLLVM_INCLUDE_TESTS=OFF \
           -DLLVM_INCLUDE_EXAMPLES=OFF \
@@ -109,17 +110,48 @@ jobs:
           cmake --build "compiler-rt-$triple" --target install-builtins --parallel
         done
 
-    - name: Debug builtins location
+    - name: Build libunwind for cross targets
+      if: steps.cache-llvm.outputs.cache-hit != 'true'
+      run: |
+        for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-w64-windows-gnu; do
+          case "$triple" in
+            *linux*)   system="Linux"   ;;
+            *windows*) system="Windows" ;;
+          esac
+          cmake -S llvm-project/runtimes -B "libunwind-$triple" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/opt/llvm \
+            -DCMAKE_C_COMPILER=/opt/llvm/bin/clang \
+            -DCMAKE_CXX_COMPILER=/opt/llvm/bin/clang++ \
+            -DCMAKE_C_COMPILER_TARGET="$triple" \
+            -DCMAKE_CXX_COMPILER_TARGET="$triple" \
+            -DCMAKE_AR=/opt/llvm/bin/llvm-ar \
+            -DCMAKE_NM=/opt/llvm/bin/llvm-nm \
+            -DCMAKE_RANLIB=/opt/llvm/bin/llvm-ranlib \
+            -DCMAKE_SYSTEM_NAME="$system" \
+            -DCMAKE_SYSROOT="$GITHUB_WORKSPACE/Babel/PackagedFiles/dependencies/sysroots/$triple" \
+            -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY \
+            -DLLVM_ENABLE_RUNTIMES=libunwind \
+            -DLIBUNWIND_ENABLE_SHARED=OFF \
+            -DLIBUNWIND_ENABLE_STATIC=ON \
+            -DLIBUNWIND_USE_COMPILER_RT=ON
+          cmake --build "libunwind-$triple" --target unwind --parallel
+          cmake --install "libunwind-$triple" --component unwind
+        done
+
+    - name: Debug builtins and libunwind location
+      if: steps.cache-llvm.outputs.cache-hit != 'true'
       run: |
         echo "Resource dir: $(/opt/llvm/bin/clang --print-resource-dir)"
         find /opt/llvm -iname "libclang_rt.builtins*"
+        find /opt/llvm -iname "libunwind.a"
 
     - name: Save LLVM cache
       if: steps.cache-llvm.outputs.cache-hit != 'true'
       uses: actions/cache/save@v4
       with:
         path: /opt/llvm
-        key: llvm-20.1.6-linux-${{ matrix.arch }}-v1
+        key: llvm-20.1.6-linux-${{ matrix.arch }}-v2
 
     # build
 
@@ -160,6 +192,12 @@ jobs:
         RESOURCE_DIR=$(/opt/llvm/bin/clang --print-resource-dir)
         mkdir -p staging/dependencies/lib/clang
         cp -r "$RESOURCE_DIR" staging/dependencies/lib/clang/20
+
+        # copy libunwind static libs per triple (not part of the resource dir, install separately)
+        for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-w64-windows-gnu; do
+          mkdir -p "staging/dependencies/lib/clang/20/lib/$triple"
+          find /opt/llvm -path "*$triple*" -name "libunwind.a" -exec cp {} "staging/dependencies/lib/clang/20/lib/$triple/" \;
+        done
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
