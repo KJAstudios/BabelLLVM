@@ -17,10 +17,12 @@ jobs:
         include:
           - arch: x86_64
             triple: x86_64-linux-gnu
+            target_triple: x86_64-unknown-linux-gnu
             debarch: amd64
             runner: ubuntu-22.04
           - arch: aarch64
             triple: aarch64-linux-gnu
+            target_triple: aarch64-unknown-linux-gnu
             debarch: arm64
             runner: ubuntu-22.04-arm
 
@@ -46,7 +48,7 @@ jobs:
       - name: Assemble minimal sysroot (symlinks resolved to real files)
         run: |
           set -e
-          SYSROOT=sysroot-${{ matrix.triple }}
+          SYSROOT=sysroot-${{ matrix.target_triple }}
           TRIPLE=${{ matrix.triple }}
           mkdir -p "$SYSROOT/lib/$TRIPLE" "$SYSROOT/usr/lib/$TRIPLE"
 
@@ -107,8 +109,8 @@ jobs:
 
       - name: Debug - sysroot size and file count
         run: |
-          find sysroot-${{ matrix.triple }} -type f | wc -l
-          du -sh sysroot-${{ matrix.triple }}
+          find sysroot-${{ matrix.target_triple }} -type f | wc -l
+          du -sh sysroot-${{ matrix.target_triple }}
 
       - name: Verify with a smoke-test link
         run: |
@@ -117,7 +119,7 @@ jobs:
           echo 'int main(){return 0;}' > test.c
           clang --target=${{ matrix.triple }} -c test.c -o test.o
           clang -fuse-ld=lld --target=${{ matrix.triple }} \
-            --sysroot=$(pwd)/sysroot-${{ matrix.triple }} \
+            --sysroot=$(pwd)/sysroot-${{ matrix.target_triple }} \
             -v \
             -o test_exe test.o
           echo "Link succeeded"
@@ -126,8 +128,8 @@ jobs:
       - name: Upload sysroot artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sysroot-${{ matrix.triple }}
-          path: sysroot-${{ matrix.triple }}
+          name: ${{ matrix.target_triple }}
+          path: sysroot-${{ matrix.target_triple }}
           if-no-files-found: error
           retention-days: 90
 
@@ -139,11 +141,11 @@ jobs:
           wget -q "https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz"
           tar -xf "llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz"
 
-      - name: Assemble mingw sysroot (lib only, no headers)
+      - name: Assemble mingw sysroot (lib + headers)
         run: |
           set -e
           MINGW_DIR=$(find . -maxdepth 1 -name 'llvm-mingw-*' -type d | head -1)
-          SYSROOT=sysroot-x86_64-w64-mingw32
+          SYSROOT=sysroot-x86_64-w64-windows-gnu
           mkdir -p "$SYSROOT"
           cp -rL "$MINGW_DIR/x86_64-w64-mingw32/lib" "$SYSROOT/lib"
           cp -rL "$MINGW_DIR/x86_64-w64-mingw32/include" "$SYSROOT/include"
@@ -161,7 +163,7 @@ jobs:
       - name: Upload mingw sysroot artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sysroot-x86_64-w64-mingw32
-          path: sysroot-x86_64-w64-mingw32
+          name: x86_64-w64-windows-gnu
+          path: sysroot-x86_64-w64-windows-gnu
           if-no-files-found: error
           retention-days: 90
