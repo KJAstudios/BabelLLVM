@@ -38,16 +38,15 @@ jobs:
     - name: Prepare LLVM install directory
       run: sudo mkdir -p /opt/llvm && sudo chown $(id -u):$(id -g) /opt/llvm
 
-    - name: Cache LLVM build
-      id: cache-llvm
+    - name: Cache LLVM/Clang/LLD build
+      id: cache-llvm-core
       uses: actions/cache/restore@v4
       with:
         path: /opt/llvm
-        key: llvm-20.1.6-linux-${{ matrix.arch }}-v2
+        key: llvm-core-20.1.6-linux-${{ matrix.arch }}-v1
 
-    # build and cache llvm, since the downloads don't contain the necessary cmake files
     - name: Checkout LLVM
-      if: steps.cache-llvm.outputs.cache-hit != 'true'
+      if: steps.cache-llvm-core.outputs.cache-hit != 'true'
       uses: actions/checkout@v4
       with:
         repository: llvm/llvm-project
@@ -63,7 +62,7 @@ jobs:
           runtimes
 
     - name: Build LLVM, Clang, and LLD
-      if: steps.cache-llvm.outputs.cache-hit != 'true'
+      if: steps.cache-llvm-core.outputs.cache-hit != 'true'
       run: |
         cmake -S llvm-project/llvm -B llvm-build -G Ninja \
           -DCMAKE_BUILD_TYPE=Release \
@@ -78,8 +77,40 @@ jobs:
         cmake --build llvm-build --parallel
         cmake --install llvm-build
 
+    - name: Save LLVM/Clang/LLD cache
+      if: steps.cache-llvm-core.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: /opt/llvm
+        key: llvm-core-20.1.6-linux-${{ matrix.arch }}-v1
+
+    - name: Cache compiler-rt + libunwind builds
+      id: cache-runtimes
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          /opt/llvm/lib/clang/20/lib
+          /opt/llvm/lib/x86_64-unknown-linux-gnu
+          /opt/llvm/lib/aarch64-unknown-linux-gnu
+          /opt/llvm/lib/x86_64-w64-windows-gnu
+        key: llvm-runtimes-20.1.6-linux-${{ matrix.arch }}-v1
+
+    # Need the LLVM source checked out even on a runtimes cache-hit-but-core-miss edge case;
+    # this is idempotent if llvm-project already exists from the step above
+    - name: Checkout LLVM (for runtimes build)
+      if: steps.cache-runtimes.outputs.cache-hit != 'true'
+      uses: actions/checkout@v4
+      with:
+        repository: llvm/llvm-project
+        ref: llvmorg-20.1.6
+        path: llvm-project
+        sparse-checkout: |
+          compiler-rt
+          libunwind
+          runtimes
+
     - name: Build compiler-rt builtins for cross targets
-      if: steps.cache-llvm.outputs.cache-hit != 'true'
+      if: steps.cache-runtimes.outputs.cache-hit != 'true'
       run: |
         set -e
         for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-w64-windows-gnu; do
@@ -113,7 +144,7 @@ jobs:
         done
 
     - name: Build libunwind for cross targets
-      if: steps.cache-llvm.outputs.cache-hit != 'true'
+      if: steps.cache-runtimes.outputs.cache-hit != 'true'
       run: |
         set -e
         for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-w64-windows-gnu; do
@@ -144,18 +175,22 @@ jobs:
         done
 
     - name: Debug builtins and libunwind location
-      if: steps.cache-llvm.outputs.cache-hit != 'true'
+      if: steps.cache-runtimes.outputs.cache-hit != 'true'
       run: |
         echo "Resource dir: $(/opt/llvm/bin/clang --print-resource-dir)"
         find /opt/llvm -iname "libclang_rt.builtins*"
         find /opt/llvm -iname "libunwind.a"
 
-    - name: Save LLVM cache
-      if: steps.cache-llvm.outputs.cache-hit != 'true'
+    - name: Save compiler-rt + libunwind cache
+      if: steps.cache-runtimes.outputs.cache-hit != 'true'
       uses: actions/cache/save@v4
       with:
-        path: /opt/llvm
-        key: llvm-20.1.6-linux-${{ matrix.arch }}-v2
+        path: |
+          /opt/llvm/lib/clang/20/lib
+          /opt/llvm/lib/x86_64-unknown-linux-gnu
+          /opt/llvm/lib/aarch64-unknown-linux-gnu
+          /opt/llvm/lib/x86_64-w64-windows-gnu
+        key: llvm-runtimes-20.1.6-linux-${{ matrix.arch }}-v1
 
     # build
 
