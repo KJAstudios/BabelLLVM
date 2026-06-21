@@ -106,8 +106,7 @@ jobs:
             -DCOMPILER_RT_BUILD_PROFILE=OFF \
             -DCOMPILER_RT_BUILD_MEMPROF=OFF \
             -DCOMPILER_RT_BUILD_ORC=OFF 
-          cmake --build "compiler-rt-$triple" --parallel
-          cmake --install "compiler-rt-$triple"
+          cmake --build "compiler-rt-$triple" --target install-builtins --parallel
         done
 
     - name: Save LLVM cache
