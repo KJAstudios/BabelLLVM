@@ -154,22 +154,26 @@ jobs:
             *linux*)   system="Linux"   ;;
             *windows*) system="Windows" ;;
           esac
-          cmake -S llvm-project/runtimes -B "libunwind-$triple" -G Ninja \
+          cmake -S llvm-project/libunwind -B "libunwind-$triple" -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX=/opt/llvm \
             -DCMAKE_C_COMPILER=/opt/llvm/bin/clang \
             -DCMAKE_CXX_COMPILER=/opt/llvm/bin/clang++ \
+            -DCMAKE_ASM_COMPILER=/opt/llvm/bin/clang \
+            -DCMAKE_C_COMPILER_TARGET="$triple" \
+            -DCMAKE_CXX_COMPILER_TARGET="$triple" \
+            -DCMAKE_ASM_COMPILER_TARGET="$triple" \
             -DCMAKE_AR=/opt/llvm/bin/llvm-ar \
             -DCMAKE_NM=/opt/llvm/bin/llvm-nm \
             -DCMAKE_RANLIB=/opt/llvm/bin/llvm-ranlib \
-            -DLLVM_RUNTIME_TARGETS="$triple" \
-            -DRUNTIMES_${triple}_CMAKE_SYSTEM_NAME="$system" \
-            -DRUNTIMES_${triple}_CMAKE_SYSROOT="$GITHUB_WORKSPACE/Babel/PackagedFiles/dependencies/sysroots/$triple" \
-            -DRUNTIMES_${triple}_LLVM_ENABLE_RUNTIMES=libunwind \
-            -DRUNTIMES_${triple}_LIBUNWIND_ENABLE_SHARED=OFF \
-            -DRUNTIMES_${triple}_LIBUNWIND_ENABLE_STATIC=ON \
-            -DRUNTIMES_${triple}_LIBUNWIND_USE_COMPILER_RT=ON \
-            -DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=ON
+            -DCMAKE_SYSTEM_NAME="$system" \
+            -DCMAKE_SYSROOT="$GITHUB_WORKSPACE/Babel/PackagedFiles/dependencies/sysroots/$triple" \
+            -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY \
+            -DLLVM_PATH="$GITHUB_WORKSPACE/llvm-project/llvm" \
+            -DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=ON \
+            -DLIBUNWIND_ENABLE_SHARED=OFF \
+            -DLIBUNWIND_ENABLE_STATIC=ON \
+            -DLIBUNWIND_USE_COMPILER_RT=ON
           cmake --build "libunwind-$triple" --target unwind --parallel
           cmake --install "libunwind-$triple" --component unwind
         done
