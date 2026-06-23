@@ -20,16 +20,18 @@ jobs:
               Remove-Item "$triple.zip"
           }
 
-      - name: Cache LLVM build
-        id: cache-llvm
+      - name: Prepare LLVM install directory
+        run: New-Item -ItemType Directory -Force -Path C:/LLVM | Out-Null
+
+      - name: Cache LLVM/Clang/LLD build
+        id: cache-llvm-core
         uses: actions/cache/restore@v4
         with:
           path: C:/LLVM
-          key: llvm-20.1.6-windows-x64-v2
+          key: llvm-core-20.1.6-windows-x64-v2
 
-      # build and cache llvm, since the downloads don't contain the necessary cmake files
       - name: Checkout LLVM
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        if: steps.cache-llvm-core.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
           repository: llvm/llvm-project
@@ -42,9 +44,10 @@ jobs:
             compiler-rt
             cmake
             libunwind
+            runtimes
 
       - name: Build LLVM, Clang, and LLD
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        if: steps.cache-llvm-core.outputs.cache-hit != 'true'
         run: |
           cmake -S llvm-project/llvm -B llvm-build -G Ninja `
             -DCMAKE_BUILD_TYPE=Release `
@@ -59,9 +62,44 @@ jobs:
           cmake --build llvm-build --config Release --parallel
           cmake --install llvm-build --config Release
 
+      - name: Save LLVM/Clang/LLD cache
+        if: steps.cache-llvm-core.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: C:/LLVM
+          key: llvm-core-20.1.6-windows-x64-v2
+
+      - name: Cache compiler-rt + libunwind builds
+        id: cache-runtimes
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            C:/LLVM/lib/clang/20/lib
+            C:/LLVM/lib/x86_64-unknown-linux-gnu
+            C:/LLVM/lib/aarch64-unknown-linux-gnu
+            C:/LLVM/lib/x86_64-w64-windows-gnu
+          key: llvm-runtimes-20.1.6-windows-x64-v2
+
+      # Need the LLVM source checked out even on a runtimes cache-hit-but-core-miss edge case;
+      # this is idempotent if llvm-project already exists from the step above
+      - name: Checkout LLVM (for runtimes build)
+        if: steps.cache-runtimes.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: llvm/llvm-project
+          ref: llvmorg-20.1.6
+          path: llvm-project
+          sparse-checkout: |
+            compiler-rt
+            libunwind
+            runtimes
+            cmake
+            llvm
+
       - name: Build compiler-rt builtins for cross targets
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        if: steps.cache-runtimes.outputs.cache-hit != 'true'
         run: |
+          $ErrorActionPreference = "Stop"
           $targets = @(
             @{ triple = "x86_64-unknown-linux-gnu"; system = "Linux" },
             @{ triple = "aarch64-unknown-linux-gnu"; system = "Linux" },
@@ -83,6 +121,7 @@ jobs:
               -DCMAKE_SYSTEM_NAME="$system" `
               -DCMAKE_SYSROOT="$env:GITHUB_WORKSPACE/Babel/PackagedFiles/dependencies/sysroots/$triple" `
               -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY `
+              -DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=ON `
               -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON `
               -DCOMPILER_RT_BUILD_BUILTINS=ON `
               -DCOMPILER_RT_BUILD_SANITIZERS=OFF `
@@ -91,18 +130,80 @@ jobs:
               -DCOMPILER_RT_BUILD_PROFILE=OFF `
               -DCOMPILER_RT_BUILD_MEMPROF=OFF `
               -DCOMPILER_RT_BUILD_ORC=OFF
-            cmake --build "compiler-rt-$triple" --config Release --parallel
-            cmake --install "compiler-rt-$triple" --config Release
+            cmake --build "compiler-rt-$triple" --config Release --target install-builtins --parallel
           }
 
-      - name: Save LLVM cache
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
+      - name: Build libunwind for cross targets
+        if: steps.cache-runtimes.outputs.cache-hit != 'true'
+        run: |
+          $ErrorActionPreference = "Stop"
+          $targets = @(
+            @{ triple = "x86_64-unknown-linux-gnu"; system = "Linux" },
+            @{ triple = "aarch64-unknown-linux-gnu"; system = "Linux" },
+            @{ triple = "x86_64-w64-windows-gnu"; system = "Windows" }
+          )
+          foreach ($t in $targets) {
+            $triple = $t.triple
+            $system = $t.system
+            cmake -S llvm-project/libunwind -B "libunwind-$triple" -G Ninja `
+              -DCMAKE_BUILD_TYPE=Release `
+              -DCMAKE_INSTALL_PREFIX="C:/LLVM" `
+              -DLIBUNWIND_INSTALL_LIBRARY_DIR="C:/LLVM/lib/$triple" `
+              -DCMAKE_C_COMPILER="C:/LLVM/bin/clang.exe" `
+              -DCMAKE_CXX_COMPILER="C:/LLVM/bin/clang++.exe" `
+              -DCMAKE_ASM_COMPILER="C:/LLVM/bin/clang.exe" `
+              -DCMAKE_C_COMPILER_TARGET="$triple" `
+              -DCMAKE_CXX_COMPILER_TARGET="$triple" `
+              -DCMAKE_ASM_COMPILER_TARGET="$triple" `
+              -DCMAKE_AR="C:/LLVM/bin/llvm-ar.exe" `
+              -DCMAKE_NM="C:/LLVM/bin/llvm-nm.exe" `
+              -DCMAKE_RANLIB="C:/LLVM/bin/llvm-ranlib.exe" `
+              -DCMAKE_SYSTEM_NAME="$system" `
+              -DCMAKE_SYSROOT="$env:GITHUB_WORKSPACE/Babel/PackagedFiles/dependencies/sysroots/$triple" `
+              -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY `
+              -DLLVM_PATH="$env:GITHUB_WORKSPACE/llvm-project/llvm" `
+              -DLIBUNWIND_ENABLE_SHARED=OFF `
+              -DLIBUNWIND_ENABLE_STATIC=ON `
+              -DLIBUNWIND_USE_COMPILER_RT=ON
+            cmake --build "libunwind-$triple" --config Release --target unwind --parallel
+            cmake --install "libunwind-$triple" --config Release
+            Get-Item "C:/LLVM/lib/$triple/libunwind.a"
+          }
+
+      - name: Debug builtins and libunwind location
+        if: steps.cache-runtimes.outputs.cache-hit != 'true'
+        run: |
+          Write-Host "Resource dir: $(& 'C:/LLVM/bin/clang.exe' --print-resource-dir)"
+          Get-ChildItem -Recurse C:/LLVM -Filter "libclang_rt.builtins*" -ErrorAction SilentlyContinue
+          Get-ChildItem -Recurse C:/LLVM -Filter "libunwind.a" -ErrorAction SilentlyContinue
+
+      - name: Save compiler-rt + libunwind cache
+        if: steps.cache-runtimes.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: C:/LLVM
-          key: llvm-20.1.6-windows-x64-v2
+          path: |
+            C:/LLVM/lib/clang/20/lib
+            C:/LLVM/lib/x86_64-unknown-linux-gnu
+            C:/LLVM/lib/aarch64-unknown-linux-gnu
+            C:/LLVM/lib/x86_64-w64-windows-gnu
+          key: llvm-runtimes-20.1.6-windows-x64-v2
 
       # build
+
+      - name: Compile runtime library
+        working-directory: Babel
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Force -Path "PackagedFiles/dependencies/runtimeLibraries" | Out-Null
+          foreach ($triple in "x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-w64-windows-gnu") {
+            New-Item -ItemType Directory -Force -Path "PackagedFiles/dependencies/runtimeLibraries/$triple" | Out-Null
+            & "C:/LLVM/bin/clang-20.exe" -c -emit-llvm `
+              --target="$triple" `
+              --sysroot="PackagedFiles/dependencies/sysroots/$triple" `
+              -O2 `
+              -o "PackagedFiles/dependencies/runtimeLibraries/$triple/runtime.bc" `
+              CoreLibrary/coreLibrary.c
+          }
 
       - name: Configure CMake
         working-directory: Babel
@@ -121,8 +222,9 @@ jobs:
       - name: Package compiler dependencies
         working-directory: Babel
         run: |
-          mkdir staging/dependencies/lib
-          mkdir staging/dependencies/bin
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Force -Path staging/dependencies/lib | Out-Null
+          New-Item -ItemType Directory -Force -Path staging/dependencies/bin | Out-Null
 
           # copy clang, lld, and essential LLVM tools (statically linked, no DLL deps)
           cp C:/LLVM/bin/clang.exe staging/dependencies/bin/
@@ -137,16 +239,32 @@ jobs:
           $licenseUrl = "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-20.1.6/LICENSE.TXT"
           Invoke-WebRequest $licenseUrl -OutFile staging/dependencies/LLVM-LICENSE.TXT
 
-          # copy the clang resource dir — includes compiler-rt builtins for all cross targets
+          # copy the clang resource dir (headers etc.)
           $resourceDir = & "C:/LLVM/bin/clang.exe" --print-resource-dir
           New-Item -ItemType Directory -Force -Path staging/dependencies/lib/clang | Out-Null
           cp -r $resourceDir staging/dependencies/lib/clang/20
+
+          # copy builtins + libunwind per triple from their actual LLVM_ENABLE_PER_TARGET_RUNTIME_DIR location
+          foreach ($triple in "x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-w64-windows-gnu") {
+            New-Item -ItemType Directory -Force -Path "staging/dependencies/lib/clang/20/lib/$triple" | Out-Null
+
+            $builtins = "C:/LLVM/lib/$triple/libclang_rt.builtins.a"
+            if (Test-Path $builtins) {
+              cp $builtins "staging/dependencies/lib/clang/20/lib/$triple/"
+            } else {
+              Write-Host "WARNING: missing builtins for $triple"
+            }
+
+            $unwind = "C:/LLVM/lib/$triple/libunwind.a"
+            if (Test-Path $unwind) {
+              cp $unwind "staging/dependencies/lib/clang/20/lib/$triple/"
+            } else {
+              Write-Host "WARNING: missing libunwind for $triple"
+            }
+          }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: babel-windows-x64
           path: Babel/staging
-
-
-
