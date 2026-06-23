@@ -204,6 +204,7 @@ jobs:
       run: |
         set -e
         for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-w64-windows-gnu; do
+          mkdir "dependencies/runtimeLibraries/$triple"
           "/opt/llvm/bin/clang-20" -c -emit-llvm \
           --target="$triple" \
           --sysroot="PackagedFiles/dependencies/sysroots/$triple" \
