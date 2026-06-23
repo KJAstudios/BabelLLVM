@@ -17,14 +17,16 @@ int Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
     return 1;
   }
 
-  std::string libraryFilePath = GetLibraryFilePath(executablePath);
+  std::string libraryFilePath =
+      GetLibraryFilePath(executablePath, babelArgs.GetTargetTriple());
   if (libraryFilePath.empty()) {
     std::cerr << "Error: core library not found.\n";
     RemoveObjectFile(objectFilePath);
     return 1;
   }
 
-  // define before the args declaration to avoid bad memory due to how StringRef works
+  // define before the args declaration to avoid bad memory due to how StringRef
+  // works
   std::string target;
   std::string sysroot;
   std::string lldPath;
@@ -43,7 +45,7 @@ int Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
 
     // if a custom target is defined, ensure we use the bundled lld
     lldPath = GetLLDPath(clangPath);
-    if(lldPath.empty()){
+    if (lldPath.empty()) {
       std::cerr << "Error: lld not found.\n";
       RemoveObjectFile(objectFilePath);
       return 1;
@@ -86,7 +88,8 @@ int Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
   return RemoveObjectFile(objectFilePath);
 }
 
-std::string Linker::GetLibraryFilePath(std::string &executablePath) {
+std::string Linker::GetLibraryFilePath(std::string &executablePath,
+                                       std::string &targetTriple) {
   // case for running in the development environment
   if (llvm::sys::fs::exists("runtime.bc")) {
     return "runtime.bc";
@@ -95,7 +98,8 @@ std::string Linker::GetLibraryFilePath(std::string &executablePath) {
   // dependencies folder is only copied over for the finalized build
   llvm::SmallString<256> libPath(executablePath);
   llvm::sys::path::remove_filename(libPath);
-  llvm::sys::path::append(libPath, "dependencies", "runtime.bc");
+  llvm::sys::path::append(libPath, "dependencies", "runtimeLibraries",
+                          targetTriple, "runtime.bc");
 
   if (llvm::sys::fs::exists(libPath)) {
     return std::string(libPath);

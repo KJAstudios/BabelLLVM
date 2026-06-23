@@ -199,6 +199,19 @@ jobs:
 
     # build
 
+    - name: Compile runtime library
+      working-directory: Babel
+      run: |
+        for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-w64-windows-gnu; do
+          set -e
+          clang-20 -c -emit-llvm \
+          --target="#triple" \
+          --sysroot="PackagedFiles/dependencies/sysroots/$triple" \
+          -O2 \
+          -o "dependencies/runtimeLibraries/runtime.bc" \
+          CoreLibrary/coreLibrary.c
+        done
+
     - name: Configure CMake
       working-directory: Babel
       run: |
