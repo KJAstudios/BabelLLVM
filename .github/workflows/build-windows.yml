@@ -197,7 +197,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path "PackagedFiles/dependencies/runtimeLibraries" | Out-Null
           foreach ($triple in "x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-w64-windows-gnu") {
             New-Item -ItemType Directory -Force -Path "PackagedFiles/dependencies/runtimeLibraries/$triple" | Out-Null
-            & "C:/LLVM/bin/clang-20.exe" -c -emit-llvm `
+            & "C:/LLVM/bin/clang.exe" -c -emit-llvm `
               --target="$triple" `
               --sysroot="PackagedFiles/dependencies/sysroots/$triple" `
               -O2 `
@@ -228,7 +228,6 @@ jobs:
 
           # copy clang, lld, and essential LLVM tools (statically linked, no DLL deps)
           cp C:/LLVM/bin/clang.exe staging/dependencies/bin/
-          cp C:/LLVM/bin/clang-20.exe staging/dependencies/bin/
           cp C:/LLVM/bin/ld.lld.exe staging/dependencies/bin/
           cp C:/LLVM/bin/llvm-ar.exe staging/dependencies/bin/
           cp C:/LLVM/bin/llvm-nm.exe staging/dependencies/bin/
