@@ -239,10 +239,16 @@ jobs:
         # copy builtins + libunwind per triple from their actual LLVM_ENABLE_PER_TARGET_RUNTIME_DIR location
         for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-w64-windows-gnu; do
           mkdir -p "staging/dependencies/lib/clang/20/lib/$triple"
-          [ -f "/opt/llvm/lib/$triple/libclang_rt.builtins.a" ] && \
+          if [ -f "/opt/llvm/lib/$triple/libclang_rt.builtins.a" ]; then
             cp "/opt/llvm/lib/$triple/libclang_rt.builtins.a" "staging/dependencies/lib/clang/20/lib/$triple/"
-          [ -f "/opt/llvm/lib/$triple/libunwind.a" ] && \
+          else
+            echo "WARNING: missing builtins for $triple"
+          fi
+          if [ -f "/opt/llvm/lib/$triple/libunwind.a" ]; then
             cp "/opt/llvm/lib/$triple/libunwind.a" "staging/dependencies/lib/clang/20/lib/$triple/"
+          else
+            echo "WARNING: missing libunwind for $triple"
+          fi
         done
 
     - name: Upload artifact
