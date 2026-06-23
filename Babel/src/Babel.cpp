@@ -45,7 +45,6 @@ int Babel::SetupModuleForTarget(std::string &targetTriple) {
   LLVMInitializeAArch64AsmParser();
   LLVMInitializeAArch64AsmPrinter();
 
-  std::cerr << "Provided target Triple: " << targetTriple << "\n";
 
   std::string error;
 

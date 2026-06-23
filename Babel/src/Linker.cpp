@@ -69,12 +69,6 @@ int Linker::RunLinker(BabelArgs babelArgs, std::string &objectFilePath,
     args.emplace_back(sysroot);
   }
 
-  std::cerr << "Clang Args: ";
-  for (auto arg : args) {
-    std::cerr << arg.str() << " ";
-  }
-  std::cerr << '\n';
-
   std::string errorMessage;
   int result = llvm::sys::ExecuteAndWait(clangPath, args, std::nullopt, {}, 0,
                                          0, &errorMessage);
@@ -124,15 +118,12 @@ std::string Linker::GetClangPath(std::string &executablePath) {
   for (auto &name : candidates) {
     llvm::SmallString<256> bundledPath(exePath);
     llvm::sys::path::append(bundledPath, name);
-    std::cerr << "Checking for clang at path: " << bundledPath.str().str()
-              << "\n";
+
     if (llvm::sys::fs::exists(bundledPath)) {
-      std::cerr << "Clang found.\n";
       return std::string(bundledPath);
     }
   }
 
-  std::cerr << "Clang not found in dependencies\n";
   // check PATH if the dependecy isn't found
   for (auto &name : candidates) {
     auto found = llvm::sys::findProgramByName(name);
@@ -156,13 +147,10 @@ std::string Linker::GetLLDPath(std::string &clangPath) {
 #endif
 
   llvm::sys::path::append(lldPath, lldName);
-  std::cerr << "Checking for lld at path: " << lldPath.str().str() << "\n";
   if (llvm::sys::fs::exists(lldPath)) {
-    std::cerr << "lld found.\n";
     return std::string(lldPath);
   }
 
-  std::cerr << "lld not found in dependencies\n";
   // check PATH if the dependecy isn't found
   auto found = llvm::sys::findProgramByName(lldName);
   if (found) {
