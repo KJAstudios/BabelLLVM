@@ -157,7 +157,7 @@ jobs:
           cmake -S llvm-project/libunwind -B "libunwind-$triple" -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX=/opt/llvm \
-            -DCMAKE_INSTALL_LIBDIR="lib/$triple" \
+            -DLIBUNWIND_INSTALL_LIBRARY_DIR="/opt/llvm/lib/$triple" \
             -DCMAKE_C_COMPILER=/opt/llvm/bin/clang \
             -DCMAKE_CXX_COMPILER=/opt/llvm/bin/clang++ \
             -DCMAKE_ASM_COMPILER=/opt/llvm/bin/clang \
