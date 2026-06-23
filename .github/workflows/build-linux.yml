@@ -157,6 +157,7 @@ jobs:
           cmake -S llvm-project/libunwind -B "libunwind-$triple" -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX=/opt/llvm \
+            -DCMAKE_INSTALL_LIBDIR="lib/$triple" \
             -DCMAKE_C_COMPILER=/opt/llvm/bin/clang \
             -DCMAKE_CXX_COMPILER=/opt/llvm/bin/clang++ \
             -DCMAKE_ASM_COMPILER=/opt/llvm/bin/clang \
@@ -170,7 +171,6 @@ jobs:
             -DCMAKE_SYSROOT="$GITHUB_WORKSPACE/Babel/PackagedFiles/dependencies/sysroots/$triple" \
             -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY \
             -DLLVM_PATH="$GITHUB_WORKSPACE/llvm-project/llvm" \
-            -DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=ON \
             -DLIBUNWIND_ENABLE_SHARED=OFF \
             -DLIBUNWIND_ENABLE_STATIC=ON \
             -DLIBUNWIND_USE_COMPILER_RT=ON
