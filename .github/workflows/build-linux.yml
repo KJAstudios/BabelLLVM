@@ -204,12 +204,12 @@ jobs:
       run: |
         set -e
         for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-w64-windows-gnu; do
-          mkdir "dependencies/runtimeLibraries/$triple"
+          mkdir "PackagedFiles/dependencies/runtimeLibraries/$triple"
           "/opt/llvm/bin/clang-20" -c -emit-llvm \
           --target="$triple" \
           --sysroot="PackagedFiles/dependencies/sysroots/$triple" \
           -O2 \
-          -o "dependencies/runtimeLibraries/$triple/runtime.bc" \
+          -o "PackagedFiles/dependencies/runtimeLibraries/$triple/runtime.bc" \
           CoreLibrary/coreLibrary.c
         done
 
