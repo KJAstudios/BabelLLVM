@@ -203,6 +203,8 @@ jobs:
       working-directory: Babel
       run: |
         set -e
+        ls PackagedFiles
+        ls PackagedFiles/dependencies
         for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-w64-windows-gnu; do
           mkdir "PackagedFiles/dependencies/runtimeLibraries/$triple"
           "/opt/llvm/bin/clang-20" -c -emit-llvm \
