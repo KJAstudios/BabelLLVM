@@ -202,13 +202,13 @@ jobs:
     - name: Compile runtime library
       working-directory: Babel
       run: |
+        set -e
         for triple in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-w64-windows-gnu; do
-          set -e
-          "$GITHUB_WORKSPACE/dependencies/bin/clang-20" -c -emit-llvm \
-          --target="#triple" \
+          "/opt/llvm/bin/clang-20" -c -emit-llvm \
+          --target="$triple" \
           --sysroot="PackagedFiles/dependencies/sysroots/$triple" \
           -O2 \
-          -o "dependencies/runtimeLibraries/runtime.bc" \
+          -o "dependencies/runtimeLibraries/$triple/runtime.bc" \
           CoreLibrary/coreLibrary.c
         done
 
