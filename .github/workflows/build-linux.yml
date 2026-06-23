@@ -108,6 +108,7 @@ jobs:
           compiler-rt
           libunwind
           runtimes
+          cmake
 
     - name: Build compiler-rt builtins for cross targets
       if: steps.cache-runtimes.outputs.cache-hit != 'true'
