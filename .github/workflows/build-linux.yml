@@ -175,7 +175,8 @@ jobs:
             -DLIBUNWIND_ENABLE_STATIC=ON \
             -DLIBUNWIND_USE_COMPILER_RT=ON
           cmake --build "libunwind-$triple" --target unwind --parallel
-          cmake --install "libunwind-$triple" --component unwind
+          cmake --install "libunwind-$triple"
+          ls -la "/opt/llvm/lib/$triple/libunwind.a"
         done
 
     - name: Debug builtins and libunwind location
