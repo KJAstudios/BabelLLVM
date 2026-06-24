@@ -46,6 +46,11 @@ jobs:
             libunwind
             runtimes
 
+      - name: Setup MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
       - name: Build LLVM, Clang, and LLD
         if: steps.cache-llvm-core.outputs.cache-hit != 'true'
         run: |
