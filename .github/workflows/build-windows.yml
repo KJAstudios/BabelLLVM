@@ -71,6 +71,8 @@ jobs:
           -DLLVM_INCLUDE_EXAMPLES=OFF `
           -DLLVM_INCLUDE_BENCHMARKS=OFF `
           -DLLVM_INCLUDE_DOCS=OFF
+          cmake --build llvm-build --config Release --parallel
+          cmake --install llvm-build --config Release
 
       - name: Save LLVM/Clang/LLD cache
         if: steps.cache-llvm-core.outputs.cache-hit != 'true'
