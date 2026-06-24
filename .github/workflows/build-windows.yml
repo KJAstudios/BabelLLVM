@@ -50,6 +50,8 @@ jobs:
         if: steps.cache-llvm-core.outputs.cache-hit != 'true'
         run: |
           cmake -S llvm-project/llvm -B llvm-build -G Ninja `
+          -DCMAKE_C_COMPILER="cl.exe" `
+          -DCMAKE_CXX_COMPILER="cl.exe" `
           -DCMAKE_BUILD_TYPE=Release `
           -DCMAKE_INSTALL_PREFIX="C:/LLVM" `
           -DLLVM_TARGETS_TO_BUILD="X86;AArch64" `
