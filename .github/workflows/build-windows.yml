@@ -28,7 +28,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: C:/LLVM
-          key: llvm-core-20.1.6-windows-x64-v2
+          key: llvm-core-20.1.6-windows-x64-v3
 
       - name: Checkout LLVM
         if: steps.cache-llvm-core.outputs.cache-hit != 'true'
@@ -50,24 +50,27 @@ jobs:
         if: steps.cache-llvm-core.outputs.cache-hit != 'true'
         run: |
           cmake -S llvm-project/llvm -B llvm-build -G Ninja `
-            -DCMAKE_BUILD_TYPE=Release `
-            -DCMAKE_INSTALL_PREFIX="C:/LLVM" `
-            -DLLVM_TARGETS_TO_BUILD="X86;AArch64" `
-            -DLLVM_ENABLE_PROJECTS="clang;lld" `
-            -DLLVM_USE_CRT_RELEASE=MT `
-            -DLLVM_INCLUDE_TESTS=OFF `
-            -DLLVM_INCLUDE_EXAMPLES=OFF `
-            -DLLVM_INCLUDE_BENCHMARKS=OFF `
-            -DLLVM_INCLUDE_DOCS=OFF
-          cmake --build llvm-build --config Release --parallel
-          cmake --install llvm-build --config Release
+          -DCMAKE_BUILD_TYPE=Release `
+          -DCMAKE_INSTALL_PREFIX="C:/LLVM" `
+          -DLLVM_TARGETS_TO_BUILD="X86;AArch64" `
+          -DLLVM_ENABLE_PROJECTS="clang;lld" `
+          -DLLVM_USE_CRT_RELEASE=MT `
+          -DLLVM_ENABLE_ZLIB=OFF `
+          -DLLVM_ENABLE_LIBXML2=OFF `
+          -DLLVM_ENABLE_TERMINFO=OFF `
+          -DLLVM_ENABLE_CURL=OFF `
+          -DLLVM_ENABLE_HTTPLIB=OFF `
+          -DLLVM_INCLUDE_TESTS=OFF `
+          -DLLVM_INCLUDE_EXAMPLES=OFF `
+          -DLLVM_INCLUDE_BENCHMARKS=OFF `
+          -DLLVM_INCLUDE_DOCS=OFF
 
       - name: Save LLVM/Clang/LLD cache
         if: steps.cache-llvm-core.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: C:/LLVM
-          key: llvm-core-20.1.6-windows-x64-v2
+          key: llvm-core-20.1.6-windows-x64-v3
 
       - name: Cache compiler-rt + libunwind builds
         id: cache-runtimes
