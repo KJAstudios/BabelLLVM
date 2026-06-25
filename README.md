@@ -76,6 +76,10 @@ cmake --install build --prefix staging
 | `/` | `÷` |  Division |
 | `<` | `≺` | Less Than |
 | `>` | `≻` | Greater Than |
+| `<=` | `≼` | Less Than or Equal To |
+| `>=` | `≽` | Greater Than or Equal To |
+| `==` | `≡` | Equal To |
+| `!=` | `≠` | Not Equal To |
 | `=` | `≔` | Assignment  |
 | `,` | `᨞` | Function Argument Delimiter |
 | `;` | `~` | Statement terminator |
