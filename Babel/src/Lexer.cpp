@@ -2,6 +2,7 @@
 #include "Babel/Token.h"
 #include "Babel/TokenData.h"
 
+#include <algorithm>
 #include <llvm/ADT/StringRef.h>
 
 #include <llvm/Support/MemoryBuffer.h>
@@ -107,9 +108,10 @@ void Lexer::SkipComment() {
 
     offset += GetCharSize(stringCodeBuffer[offset]);
   }
-  // clear the comment from the buffer and reset the offset so it's not marked as a token
-   stringCodeBuffer = stringCodeBuffer.drop_front(offset);
-   offset = 0;
+  // clear the comment from the buffer and reset the offset so it's not marked
+  // as a token
+  stringCodeBuffer = stringCodeBuffer.drop_front(offset);
+  offset = 0;
 }
 
 Babel::TokenData Lexer::LexNumberToken() {
@@ -269,9 +271,13 @@ unsigned int Lexer::GetCharSize(const char pointer) {
 }
 
 bool Lexer::IsControlCharacter(llvm::StringRef character) {
-  return character.str() == "~" || character.str() == "꧁" ||
-         character.str() == "꧂" || character.str() == "⟅" ||
-         character.str() == "⟆" || character.str() == "᨞";
+  for (const std::string &controlChar : ControlCharacters) {
+    if (character.str() == controlChar) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 bool Lexer::IsWhitespaceCharacter(char character) {
@@ -287,26 +293,10 @@ bool Lexer::IsWhitespaceCharacter(char character) {
 }
 
 bool Lexer::IsOperatorCharacter(llvm::StringRef character) {
-  if (character.str() == "⊕") {
-    return true;
-  }
-  if (character.str() == "⊖") {
-    return true;
-  }
-  if (character.str() == "×") {
-    return true;
-  }
-  if (character.str() == "÷") {
-    return true;
-  }
-  if (character.str() == "≔") {
-    return true;
-  }
-  if (character.str() == "≺") {
-    return true;
-  }
-  if (character.str() == "≻") {
-    return true;
+   for (const std::string &operatorChar : OperatorCharacters) {
+    if (character.str() == operatorChar) {
+      return true;
+    }
   }
 
   return false;

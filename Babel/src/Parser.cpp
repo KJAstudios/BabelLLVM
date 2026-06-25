@@ -19,8 +19,12 @@ Babel::Parser::Parser(std::string *filename)
 
 void Parser::InitOperatorPrecedence() {
   operatorPrecedence["≔"] = 2;
-  operatorPrecedence["≺"] = 5;
-  operatorPrecedence["≻"] = 5;
+  operatorPrecedence["≡"] = 5;
+  operatorPrecedence["≠"] = 5;
+  operatorPrecedence["≼"] = 7;
+  operatorPrecedence["≽"] = 7;
+  operatorPrecedence["≺"] = 7;
+  operatorPrecedence["≻"] = 7;
   operatorPrecedence["⊕"] = 10;
   operatorPrecedence["⊖"] = 10;
   operatorPrecedence["×"] = 20;

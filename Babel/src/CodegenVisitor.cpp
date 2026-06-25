@@ -361,16 +361,31 @@ void CodegenVisitor::VisitBinaryExpression(
     return;
   }
   if (binaryOperator == "÷") {
-    lastResult = builder.CreateExactSDiv(leftHandSide, rightHandSide, "divtmp");
+    lastResult = builder.CreateSDiv(leftHandSide, rightHandSide, "divtmp");
     return;
   }
-
   if (binaryOperator == "≺") {
     lastResult = builder.CreateICmpSLT(leftHandSide, rightHandSide, "cmplttmp");
     return;
   }
   if (binaryOperator == "≻") {
     lastResult = builder.CreateICmpSGT(leftHandSide, rightHandSide, "cmpgttmp");
+    return;
+  }
+  if (binaryOperator == "≼") {
+    lastResult = builder.CreateICmpSLE(leftHandSide, rightHandSide, "cmpltetmp");
+    return;
+  }
+  if (binaryOperator == "≽") {
+    lastResult = builder.CreateICmpSGE(leftHandSide, rightHandSide, "cmpgtetmp");
+    return;
+  }
+  if (binaryOperator == "≡") {
+    lastResult = builder.CreateICmpEQ(leftHandSide, rightHandSide, "cmpeqtmp");
+    return;
+  }
+  if (binaryOperator == "≠") {
+    lastResult = builder.CreateICmpNE(leftHandSide, rightHandSide, "cmpnetmp");
     return;
   }
   LogError(std::string("Invalid binary operator ") + binaryOperator + ".",
