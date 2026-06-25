@@ -6,11 +6,21 @@ The idea behind the language is that it should mostly look like average code, bu
 
 ---
 
-## Building & Debugging
+## Compiling Babel Programs
 
-Babel compiles to a native executable via Clang (required). Currently supported target architectures are **aarch64** and **x86**.
+The Babel compiler is a command-line tool. Source files must use the `.bbl` extension to be recognized as valid Babel programs. Babel binaries are compatible with `lldb` for debugging.
 
-Compiled programs can be debugged with LLDB.
+**Usage:**
+
+Linux / macOS:
+```bash
+./babel  [OPTIONS]
+```
+
+Windows (PowerShell):
+```powershell
+.\babel.exe  [OPTIONS]
+```
 
 ### Command Line Arguments
 
@@ -21,6 +31,25 @@ Compiled programs can be debugged with LLDB.
 | `-o <filename>` | Set the output filename |
 | `-target <triple>` / `--target=<triple>` | Select an alternate build target |
 | `-sysroot <path>` / `--sysroot=<path>` | Provide an alternate sysroot |
+
+---
+
+## Building from Source
+
+### Dependencies
+
+- **CMake** >= 3.20
+- **Ninja**
+- **LLVM 20** (with CMake config files — e.g. via `llvm-20-dev` on Linux or the [LLVM Windows installer](https://releases.llvm.org/))
+
+### Steps
+
+```bash
+cd Babel
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_DIR=<path/to/llvm/lib/cmake/llvm>
+cmake --build build --parallel
+cmake --install build --prefix staging
+```
 
 ---
 

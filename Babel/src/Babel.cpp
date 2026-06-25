@@ -45,7 +45,6 @@ int Babel::SetupModuleForTarget(std::string &targetTriple) {
   LLVMInitializeAArch64AsmParser();
   LLVMInitializeAArch64AsmPrinter();
 
-  module->setTargetTriple(targetTriple);
 
   std::string error;
 
@@ -55,6 +54,8 @@ int Babel::SetupModuleForTarget(std::string &targetTriple) {
     std::cerr << "Failed to find requested build target: " << error << '\n';
     return 1;
   }
+
+  module->setTargetTriple(targetTriple);
 
   // create the target machine
   llvm::TargetOptions options;

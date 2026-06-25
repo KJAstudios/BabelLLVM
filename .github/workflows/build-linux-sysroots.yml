@@ -1,55 +1,175 @@
-name: Build Linux sysroots
+name: Build Sysroots
 
 on:
-  workflow_call:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/sysroots.yml'
+
+env:
+  LLVM_MINGW_VERSION: 20260602
 
 jobs:
-  build-sysroot:
-    runs-on: ${{ matrix.os }}
+  build-linux-sysroot:
+    runs-on: ${{ matrix.runner }}
     strategy:
-      fail-fast: false
       matrix:
         include:
-          - os: ubuntu-22.04
-            triple: x86_64-unknown-linux-gnu
-          - os: ubuntu-22.04-arm
-            triple: aarch64-unknown-linux-gnu
+          - arch: x86_64
+            triple: x86_64-linux-gnu
+            target_triple: x86_64-unknown-linux-gnu
+            debarch: amd64
+            runner: ubuntu-22.04
+          - arch: aarch64
+            triple: aarch64-linux-gnu
+            target_triple: aarch64-unknown-linux-gnu
+            debarch: arm64
+            runner: ubuntu-22.04-arm
 
     steps:
-      - name: Install toolchain packages
+      - name: Download required packages (no install, just fetch .deb)
         run: |
           sudo apt-get update
-          sudo apt-get install -y libc6-dev libstdc++-12-dev linux-libc-dev
+          mkdir -p debs
+          cd debs
+          apt-get download \
+            libc6 \
+            libc6-dev \
+            linux-libc-dev \
+            libgcc-s1 \
+            libgcc-12-dev
 
-      - name: Harvest sysroot files
+      - name: Extract .deb packages
         run: |
-          mkdir -p sysroot/usr/include sysroot/usr/lib sysroot/lib
-
-          # Headers
-          cp -r /usr/include/* sysroot/usr/include/
-
-          # Core libs needed for linking (static + dynamic)
-          ARCH_LIB_DIR=$(gcc -print-multiarch)
-          mkdir -p sysroot/usr/lib/$ARCH_LIB_DIR sysroot/lib/$ARCH_LIB_DIR
-
-          for lib in libc libm libpthread libdl librt libstdc++ libgcc_s; do
-            find /usr/lib/$ARCH_LIB_DIR /lib/$ARCH_LIB_DIR -maxdepth 1 \
-              -name "${lib}.so*" -o -name "${lib}.a" 2>/dev/null \
-              | xargs -I{} cp -P {} sysroot/usr/lib/$ARCH_LIB_DIR/ 2>/dev/null || true
+          mkdir -p extracted
+          for f in debs/*.deb; do
+            dpkg-deb -x "$f" extracted/
           done
 
-          # CRT startup objects
-          find /usr/lib/$ARCH_LIB_DIR /usr/lib/gcc/$ARCH_LIB_DIR -name "crt*.o" \
-            -exec cp {} sysroot/usr/lib/$ARCH_LIB_DIR/ \;
+      - name: Assemble minimal sysroot (symlinks resolved to real files)
+        run: |
+          set -e
+          SYSROOT=sysroot-${{ matrix.target_triple }}
+          TRIPLE=${{ matrix.triple }}
+          mkdir -p "$SYSROOT/lib/$TRIPLE" "$SYSROOT/usr/lib/$TRIPLE"
 
-          # Dynamic linker
-          find /lib/$ARCH_LIB_DIR -name "ld-linux*" -exec cp -P {} sysroot/lib/$ARCH_LIB_DIR/ \;
+          LIBDIR="extracted/usr/lib/$TRIPLE"
+          LIBDIR_ROOT="extracted/lib/$TRIPLE"
 
-          du -sh sysroot
+          # -L dereferences symlinks, copying actual file content instead
+          cp -L "$LIBDIR"/crt1.o "$SYSROOT/usr/lib/$TRIPLE/"
+          cp -L "$LIBDIR"/Scrt1.o "$SYSROOT/usr/lib/$TRIPLE/"
+          cp -L "$LIBDIR"/crti.o "$SYSROOT/usr/lib/$TRIPLE/"
+          cp -L "$LIBDIR"/crtn.o "$SYSROOT/usr/lib/$TRIPLE/"
+
+          cp -L "$LIBDIR"/libc.so "$SYSROOT/usr/lib/$TRIPLE/" 2>/dev/null || true
+          cp -L "$LIBDIR_ROOT"/libc.so.6 "$SYSROOT/lib/$TRIPLE/"
+          cp -L "$LIBDIR_ROOT"/libm.so.6 "$SYSROOT/lib/$TRIPLE/"
+          cp -L "$LIBDIR_ROOT"/libdl.so.6 "$SYSROOT/lib/$TRIPLE/" 2>/dev/null || true
+          cp -L "$LIBDIR_ROOT"/libpthread.so.6 "$SYSROOT/lib/$TRIPLE/" 2>/dev/null || true
+          cp -L "$LIBDIR_ROOT"/librt.so.6 "$SYSROOT/lib/$TRIPLE/" 2>/dev/null || true
+          find extracted -name 'libgcc_s.so.1' -exec cp -L {} "$SYSROOT/lib/$TRIPLE/" \;
+
+          # crt startup objects + static libgcc, from libgcc-12-dev
+          find extracted/usr/lib/gcc -name 'crtbegin*.o' -o -name 'crtend*.o' -o -name 'libgcc.a' | while read f; do
+            cp -L "$f" "$SYSROOT/usr/lib/$TRIPLE/"
+          done
+
+          cp -L "$LIBDIR"/libc_nonshared.a "$SYSROOT/usr/lib/$TRIPLE/" 2>/dev/null || true
+
+          # copy the include so we can build the compiler-rt for this
+          mkdir -p "$SYSROOT/usr/include"
+          cp -rL extracted/usr/include/. "$SYSROOT/usr/include/"
+
+          # Flatten the entire triple-specific include dir into the generic one,
+          # so multiarch-split headers (bits/, asm/, gnu/, etc.) are all visible
+          # without relying on GCC-style multiarch search-path detection.
+          if [ -d "extracted/usr/include/$TRIPLE" ]; then
+            cp -rL "extracted/usr/include/$TRIPLE/." "$SYSROOT/usr/include/"
+          fi
+
+          # add a 32 bit stub so the build can resolve it
+          mkdir -p "$SYSROOT/usr/include/gnu"
+          touch "$SYSROOT/usr/include/gnu/stubs-32.h"
+
+          find extracted/lib* -name 'ld-linux*.so*' -exec cp -L {} "$SYSROOT/lib/$TRIPLE/" \;
+
+          # Also place the dynamic linker at the multiarch-free absolute path baked into
+          # libc.so's linker script. x86_64 needs /lib64/...; aarch64 needs
+          # /lib/ld-linux-aarch64.so.1 directly (no multiarch subdir).
+          if [ "${{ matrix.arch }}" = "x86_64" ]; then
+            mkdir -p "$SYSROOT/lib64"
+            find extracted/lib* -name 'ld-linux*.so*' -exec cp -L {} "$SYSROOT/lib64/" \;
+          elif [ "${{ matrix.arch }}" = "aarch64" ]; then
+            find extracted/lib* -name 'ld-linux*.so*' -exec cp -L {} "$SYSROOT/lib/" \;
+          fi
+
+          # Sanity check: confirm nothing in the sysroot is still a symlink
+          if find "$SYSROOT" -type l | grep -q .; then
+            echo "ERROR: symlinks remain in sysroot:"
+            find "$SYSROOT" -type l
+            exit 1
+          fi
+
+          ls -la "$SYSROOT/lib/$TRIPLE" "$SYSROOT/usr/lib/$TRIPLE"
+
+      - name: Debug - sysroot size and file count
+        run: |
+          find sysroot-${{ matrix.target_triple }} -type f | wc -l
+          du -sh sysroot-${{ matrix.target_triple }}
+
+      - name: Verify with a smoke-test link
+        run: |
+          set -e
+          sudo apt-get install -y clang lld
+          echo 'int main(){return 0;}' > test.c
+          clang --target=${{ matrix.triple }} -c test.c -o test.o
+          clang -fuse-ld=lld --target=${{ matrix.triple }} \
+            --sysroot=$(pwd)/sysroot-${{ matrix.target_triple }} \
+            -v \
+            -o test_exe test.o
+          echo "Link succeeded"
+          file test_exe
 
       - name: Upload sysroot artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sysroot-${{ matrix.triple }}
-          path: sysroot
+          name: ${{ matrix.target_triple }}
+          path: sysroot-${{ matrix.target_triple }}
+          if-no-files-found: error
+          retention-days: 90
+
+  build-windows-sysroot:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download llvm-mingw release
+        run: |
+          wget -q "https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz"
+          tar -xf "llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz"
+
+      - name: Assemble mingw sysroot (lib + headers)
+        run: |
+          set -e
+          MINGW_DIR=$(find . -maxdepth 1 -name 'llvm-mingw-*' -type d | head -1)
+          SYSROOT=sysroot-x86_64-w64-windows-gnu
+          mkdir -p "$SYSROOT"
+          cp -rL "$MINGW_DIR/x86_64-w64-mingw32/lib" "$SYSROOT/lib"
+          cp -rL "$MINGW_DIR/x86_64-w64-mingw32/include" "$SYSROOT/include"
+
+          # Sanity check: confirm nothing in the sysroot is still a symlink
+          if find "$SYSROOT" -type l | grep -q .; then
+            echo "ERROR: symlinks remain in sysroot:"
+            find "$SYSROOT" -type l
+            exit 1
+          fi
+
+          find "$SYSROOT" -type f | wc -l
+          du -sh "$SYSROOT"
+
+      - name: Upload mingw sysroot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: x86_64-w64-windows-gnu
+          path: sysroot-x86_64-w64-windows-gnu
+          if-no-files-found: error
+          retention-days: 90

@@ -155,5 +155,6 @@ void ArgumentParser::PrintHelp(){
   std::cerr << "-o <file>                                     Define name of output file\n";
   std::cerr << "-target <value>       --target=<value>        Build program for the given target\n";
   std::cerr << "-sysroot <directory>  --sysroot=<value>       Define the directory to search for system headers\n";
+  std::cerr << "Currently supported build targets are: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, and x86_64-w64-windows-gnu";
 }
 } // namespace Babel

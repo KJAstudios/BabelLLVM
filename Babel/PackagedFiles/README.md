@@ -26,8 +26,19 @@ The above example is included in the Examples folder as example.bbl. To build an
 
 ## Compiling Babel Programs
 
-The Babel compiler works as a commmand line interface to compile. All source code files must have the .bbl file extension in order to be considered a valid source file. Babel can be debugged using lldb.
-Usage: `./babel <.bbl source file> [OPTIONS]`
+The Babel compiler is a command-line tool. Source files must use the `.bbl` extension to be recognized as valid Babel programs. Babel binaries are compatible with `lldb` for debugging.
+
+**Usage:**
+
+Linux / macOS:
+```bash
+./babel  [OPTIONS]
+```
+
+Windows (PowerShell):
+```powershell
+.\babel.exe  [OPTIONS]
+```
 
 ### Command Line Arguments
 

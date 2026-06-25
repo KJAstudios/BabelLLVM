@@ -4,6 +4,7 @@
 #include <llvm/TargetParser/Host.h>
 #include <llvm/TargetParser/Triple.h>
 #include <string>
+#include <vector>
 namespace Babel {
 struct BabelArgs {
 private:
@@ -13,6 +14,9 @@ private:
   std::string sysRoot;
   bool objectFileOnly = false;
   bool argError = false;
+  std::vector<std::string> supportedTargets = {"x86_64-unknown-linux-gnu",
+                                               "aarch64-unknown-linux-gnu",
+                                               "x86_64-w64-windows-gnu"};
 
 public:
   void SetInputFile(std::string &fileName) { inputFile = fileName; }
@@ -50,7 +54,28 @@ public:
     }
     targetTriple = llvm::Triple::normalize(targetTriple);
 
+    if (!ValidateTargetTriple()) {
+      std::cerr << "Target " << targetTriple
+                << " not supported. Targets supported: ";
+                
+      for (std::string &target : supportedTargets) {
+        std::cerr << target;
+      }
+      std::cerr << '\n';
+      SetError();
+      return;
+    };
     ValidateOutputFile();
+  }
+
+  bool ValidateTargetTriple() {
+
+    for (std::string &target : supportedTargets) {
+      if (target == targetTriple) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void ValidateOutputFile() {
