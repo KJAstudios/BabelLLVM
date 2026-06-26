@@ -274,8 +274,14 @@ jobs:
             }
           }
 
+      - name: Zip staging directory
+        shell: pwsh
+        run: |
+          Compress-Archive -Path Babel/staging/* -DestinationPath babel-windows-x64.zip
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: babel-windows-x64
-          path: Babel/staging
+          path: babel-windows-x64.zip

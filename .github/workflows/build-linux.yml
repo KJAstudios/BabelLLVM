@@ -269,8 +269,14 @@ jobs:
           fi
         done
 
+    - name: Zip staging directory
+      run: |
+        cd Babel/staging
+        zip -r ../../babel-linux-${{ matrix.arch }}.zip .
+        cd -
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: babel-linux-${{ matrix.arch }}
-        path: Babel/staging
+        path: babel-linux-${{ matrix.arch }}.zip
