@@ -50,6 +50,19 @@ Windows (PowerShell):
 | `-target <triple>` / `--target=<triple>` | Select an alternate build target |
 | `-sysroot <path>` / `--sysroot=<path>` | Provide an alternate sysroot |
 
+## Cross Compiling
+Babel can be cross compiled between Linux x86, Linux ARM64, and Windows x86. The build for each platform is bundled with Clang and LLD, as well as the required sysroots to facilitate cross compliation. If you wish, a different sysroot can be passed in via the `--sysroot=` options, as long as it matches the given `--target=`. Babel supports  `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`, and `x86_64-w64-windows-gnu`
+
+Linux / macOS:
+```bash
+./babel program.bbl --target=x86_64-unknown-linux-gnu
+```
+
+Windows (PowerShell):
+```powershell
+.\babel.exe program.bbl --target=x86_64-unknown-linux-gnu
+```
+
 ---
 
 ## Keywords
@@ -75,6 +88,10 @@ Windows (PowerShell):
 | `/` | `÷` |  Division |
 | `<` | `≺` | Less Than |
 | `>` | `≻` | Greater Than |
+| `<=` | `≼` | Less Than or Equal To |
+| `>=` | `≽` | Greater Than or Equal To |
+| `==` | `≡` | Equal To |
+| `!=` | `≠` | Not Equal To |
 | `=` | `≔` | Assignment  |
 | `,` | `᨞` | Function Argument Delimiter |
 | `;` | `~` | Statement terminator |
