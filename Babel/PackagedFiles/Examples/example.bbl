@@ -1,139 +1,16 @@
-✎ Helper functions
-
-funkcjonować ⟅a ᨞ b⟆ addAndPrint꧁
-  ✎ Prints the sum of two arguments
-  c ≔ a ⊕ b~
-  tisk⟅c⟆~
-꧂
-
-funkcjonować ⟅a ᨞ b⟆ subAndPrint꧁
-  ✎ Prints the difference of two arguments
-  c ≔ a ⊖ b~
-  tisk⟅c⟆~
-꧂
-
-funkcjonować ⟅a ᨞ b⟆ compareAndPrint꧁
-  ✎ Prints a if a < b, else prints b
-  əgər⟅a ≺ b⟆꧁
-    tisk⟅a⟆~
-  ꧂
-  それ以外꧁
-    tisk⟅b⟆~
-  ꧂
-꧂
-
-funkcjonować ⟅a ᨞ b ᨞ c⟆ threeArgPrint꧁
-  ✎ Tests three-argument delimiter
-  d ≔ a ⊕ b ⊕ c~
-  tisk⟅d⟆~
-꧂
-
-✎ Main
 funkcjonować ⟅⟆ 主要的꧁
-  ✎ Basic literals
-  x ≔ 42~
-  y ≔ 10~
-  z ≔ 0~
-
-  ✎ Arithmetic with literals
-  a ≔ 1 ⊕ 1~
-  b ≔ 10 ⊖ 10~
-  c ≔ 6 × 7~
-  d ≔ 10 ÷ 3~
-
-  tisk⟅a⟆~
-  tisk⟅b⟆~
-  tisk⟅c⟆~
-  tisk⟅d⟆~
-
-  ✎ Arithmetic with variables
-  e ≔ x ⊕ y~
-  f ≔ x ⊖ y~
-  g ≔ x × y~
-  h ≔ x ÷ y~
-
-  tisk⟅e⟆~
-  tisk⟅f⟆~
-  tisk⟅g⟆~
-  tisk⟅h⟆~
-
-  ✎ Chained arithmetic
-  i ≔ x ⊕ y ⊖ a~
-  tisk⟅i⟆~
-
-  ✎ Self-assignment
-  x ≔ x ⊕ 1~
-  tisk⟅x⟆~
-
-  ✎ Negative result
-  j ≔ y ⊖ x~
-  tisk⟅j⟆~
-
-  ✎ Zero operand
-  k ≔ x ⊕ 0~
-  l ≔ x × 0~
-  tisk⟅k⟆~
-  tisk⟅l⟆~
-
-  ✎ if taken
-  əgər⟅y ≺ x⟆꧁
-    tisk⟅y⟆~
-  ꧂
-
-  ✎ if not taken, else taken
+  ✎ variable declarations
+  x ≔ 1 ⊕ 1~
+  y ≔ 2 ⊖ 1~
+  ✎ if x < y
   əgər⟅x ≺ y⟆꧁
+	✎ print x
     tisk⟅x⟆~
   ꧂
+  ✎ else
   それ以外꧁
+	✎print y
     tisk⟅y⟆~
   ꧂
-
-  ✎ Equal values (neither < nor >)
-  əgər⟅b ≺ z⟆꧁
-    tisk⟅b⟆~
-  ꧂
-  それ以外꧁
-    tisk⟅z⟆~
-  ꧂
-
-  ✎ Greater-than comparison
-  əgər⟅x ≻ y⟆꧁
-    tisk⟅x⟆~
-  ꧂
-  それ以外꧁
-    tisk⟅y⟆~
-  ꧂
-
-  ✎ Nested if/else
-  əgər⟅x ≻ y⟆꧁
-    əgər⟅y ≻ z⟆꧁
-      tisk⟅y⟆~
-    ꧂
-    それ以外꧁
-      tisk⟅z⟆~
-    ꧂
-  ꧂
-  それ以外꧁
-    tisk⟅x⟆~
-  ꧂
-
-  ✎ Large values
-  m ≔ 1000000 × 1000~
-  tisk⟅m⟆~
-
-  ✎ Custom function calls
-  addAndPrint⟅x ᨞ y⟆~
-  subAndPrint⟅x ᨞ y⟆~
-  compareAndPrint⟅x ᨞ y⟆~
-
-  ✎ Function with literal arguments
-  addAndPrint⟅5 ᨞ 3⟆~
-  subAndPrint⟅5 ᨞ 3⟆~
-  compareAndPrint⟅5 ᨞ 3⟆~
-
-  ✎ Function with expression arguments (if supported)
-  addAndPrint⟅x ⊕ 1 ᨞ y ⊖ 1⟆~
-
-  ✎ Three-argument function
-  threeArgPrint⟅x ᨞ y ᨞ z⟆~
 ꧂
+```

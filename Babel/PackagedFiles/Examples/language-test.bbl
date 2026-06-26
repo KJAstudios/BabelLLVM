@@ -1,0 +1,253 @@
+✎ Helper functions
+
+funkcjonować ⟅a ᨞ b⟆ addAndPrint꧁
+  ✎ Prints the sum of two arguments
+  c ≔ a ⊕ b~
+  tisk⟅c⟆~
+꧂
+
+funkcjonować ⟅a ᨞ b⟆ subAndPrint꧁
+  ✎ Prints the difference of two arguments
+  c ≔ a ⊖ b~
+  tisk⟅c⟆~
+꧂
+
+funkcjonować ⟅a ᨞ b⟆ compareAndPrint꧁
+  ✎ Prints a if a < b, else prints b
+  əgər⟅a ≺ b⟆꧁
+    tisk⟅a⟆~
+  ꧂
+  それ以外꧁
+    tisk⟅b⟆~
+  ꧂
+꧂
+
+funkcjonować ⟅a ᨞ b⟆ lessEqualAndPrint꧁
+  ✎ Prints 1 if a <= b, else 0
+  əgər⟅a ≼ b⟆꧁
+    tisk⟅1⟆~
+  ꧂
+  それ以外꧁
+    tisk⟅0⟆~
+  ꧂
+꧂
+
+funkcjonować ⟅a ᨞ b⟆ greaterEqualAndPrint꧁
+  ✎ Prints 1 if a >= b, else 0
+  əgər⟅a ≽ b⟆꧁
+    tisk⟅1⟆~
+  ꧂
+  それ以外꧁
+    tisk⟅0⟆~
+  ꧂
+꧂
+
+funkcjonować ⟅a ᨞ b⟆ equalAndPrint꧁
+  ✎ Prints 1 if a == b, else 0
+  əgər⟅a ≡ b⟆꧁
+    tisk⟅1⟆~
+  ꧂
+  それ以外꧁
+    tisk⟅0⟆~
+  ꧂
+꧂
+
+funkcjonować ⟅a ᨞ b⟆ notEqualAndPrint꧁
+  ✎ Prints 1 if a != b, else 0
+  əgər⟅a ≠ b⟆꧁
+    tisk⟅1⟆~
+  ꧂
+  それ以外꧁
+    tisk⟅0⟆~
+  ꧂
+꧂
+
+funkcjonować ⟅a ᨞ b ᨞ c⟆ threeArgPrint꧁
+  ✎ Tests three-argument delimiter
+  d ≔ a ⊕ b ⊕ c~
+  tisk⟅d⟆~
+꧂
+
+✎ Main
+funkcjonować ⟅⟆ 主要的꧁
+  ✎ Basic literals
+  x ≔ 42~
+  y ≔ 10~
+  z ≔ 0~
+
+  ✎ Arithmetic with literals
+  a ≔ 1 ⊕ 1~
+  b ≔ 10 ⊖ 10~
+  c ≔ 6 × 7~
+  d ≔ 10 ÷ 3~
+
+  tisk⟅a⟆~
+  tisk⟅b⟆~
+  tisk⟅c⟆~
+  tisk⟅d⟆~
+
+  ✎ Arithmetic with variables
+  e ≔ x ⊕ y~
+  f ≔ x ⊖ y~
+  g ≔ x × y~
+  h ≔ x ÷ y~
+
+  tisk⟅e⟆~
+  tisk⟅f⟆~
+  tisk⟅g⟆~
+  tisk⟅h⟆~
+
+  ✎ Chained arithmetic
+  i ≔ x ⊕ y ⊖ a~
+  tisk⟅i⟆~
+
+  ✎ Self-assignment
+  x ≔ x ⊕ 1~
+  tisk⟅x⟆~
+
+  ✎ Negative result
+  j ≔ y ⊖ x~
+  tisk⟅j⟆~
+
+  ✎ Zero operand
+  k ≔ x ⊕ 0~
+  l ≔ x × 0~
+  tisk⟅k⟆~
+  tisk⟅l⟆~
+
+  ✎ if taken
+  əgər⟅y ≺ x⟆꧁
+    tisk⟅y⟆~
+  ꧂
+
+  ✎ if not taken, else taken
+  əgər⟅x ≺ y⟆꧁
+    tisk⟅x⟆~
+  ꧂
+  それ以外꧁
+    tisk⟅y⟆~
+  ꧂
+
+  ✎ Equal values (neither < nor >)
+  əgər⟅b ≺ z⟆꧁
+    tisk⟅b⟆~
+  ꧂
+  それ以外꧁
+    tisk⟅z⟆~
+  ꧂
+
+  ✎ Greater-than comparison
+  əgər⟅x ≻ y⟆꧁
+    tisk⟅x⟆~
+  ꧂
+  それ以外꧁
+    tisk⟅y⟆~
+  ꧂
+
+  ✎ Less-than-or-equal comparison (strictly less)
+  əgər⟅y ≼ x⟆꧁
+    tisk⟅y⟆~
+  ꧂
+  それ以外꧁
+    tisk⟅x⟆~
+  ꧂
+
+  ✎ Less-than-or-equal comparison (equal case)
+  əgər⟅b ≼ z⟆꧁
+    tisk⟅b⟆~
+  ꧂
+  それ以外꧁
+    tisk⟅z⟆~
+  ꧂
+
+  ✎ Greater-than-or-equal comparison (strictly greater)
+  əgər⟅x ≽ y⟆꧁
+    tisk⟅x⟆~
+  ꧂
+  それ以外꧁
+    tisk⟅y⟆~
+  ꧂
+
+  ✎ Greater-than-or-equal comparison (equal case)
+  əgər⟅z ≽ b⟆꧁
+    tisk⟅z⟆~
+  ꧂
+  それ以外꧁
+    tisk⟅b⟆~
+  ꧂
+
+  ✎ Equality comparison (equal)
+  əgər⟅b ≡ z⟆꧁
+    tisk⟅1⟆~
+  ꧂
+  それ以外꧁
+    tisk⟅0⟆~
+  ꧂
+
+  ✎ Equality comparison (not equal)
+  əgər⟅x ≡ y⟆꧁
+    tisk⟅1⟆~
+  ꧂
+  それ以外꧁
+    tisk⟅0⟆~
+  ꧂
+
+  ✎ Inequality comparison (not equal)
+  əgər⟅x ≠ y⟆꧁
+    tisk⟅1⟆~
+  ꧂
+  それ以外꧁
+    tisk⟅0⟆~
+  ꧂
+
+  ✎ Inequality comparison (equal)
+  əgər⟅b ≠ z⟆꧁
+    tisk⟅1⟆~
+  ꧂
+  それ以外꧁
+    tisk⟅0⟆~
+  ꧂
+
+  ✎ Nested if/else
+  əgər⟅x ≻ y⟆꧁
+    əgər⟅y ≻ z⟆꧁
+      tisk⟅y⟆~
+    ꧂
+    それ以外꧁
+      tisk⟅z⟆~
+    ꧂
+  ꧂
+  それ以外꧁
+    tisk⟅x⟆~
+  ꧂
+
+  ✎ Large values
+  m ≔ 1000000 × 1000~
+  tisk⟅m⟆~
+
+  ✎ Custom function calls
+  addAndPrint⟅x ᨞ y⟆~
+  subAndPrint⟅x ᨞ y⟆~
+  compareAndPrint⟅x ᨞ y⟆~
+
+  ✎ Function with literal arguments
+  addAndPrint⟅5 ᨞ 3⟆~
+  subAndPrint⟅5 ᨞ 3⟆~
+  compareAndPrint⟅5 ᨞ 3⟆~
+
+  ✎ New comparison helper functions
+  lessEqualAndPrint⟅x ᨞ y⟆~
+  lessEqualAndPrint⟅y ᨞ y⟆~
+  greaterEqualAndPrint⟅x ᨞ y⟆~
+  greaterEqualAndPrint⟅z ᨞ z⟆~
+  equalAndPrint⟅x ᨞ y⟆~
+  equalAndPrint⟅b ᨞ z⟆~
+  notEqualAndPrint⟅x ᨞ y⟆~
+  notEqualAndPrint⟅b ᨞ z⟆~
+
+  ✎ Function with expression arguments (if supported)
+  addAndPrint⟅x ⊕ 1 ᨞ y ⊖ 1⟆~
+
+  ✎ Three-argument function
+  threeArgPrint⟅x ᨞ y ᨞ z⟆~
+꧂
