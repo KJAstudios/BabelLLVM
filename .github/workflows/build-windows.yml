@@ -90,7 +90,7 @@ jobs:
             C:/LLVM/lib/x86_64-unknown-linux-gnu
             C:/LLVM/lib/aarch64-unknown-linux-gnu
             C:/LLVM/lib/x86_64-w64-windows-gnu
-          key: llvm-runtimes-20.1.6-windows-x64-v2
+          key: llvm-runtimes-20.1.6-windows-x64-v3
 
       # Need the LLVM source checked out even on a runtimes cache-hit-but-core-miss edge case;
       # this is idempotent if llvm-project already exists from the step above
@@ -142,7 +142,10 @@ jobs:
               -DCOMPILER_RT_BUILD_PROFILE=OFF `
               -DCOMPILER_RT_BUILD_MEMPROF=OFF `
               -DCOMPILER_RT_BUILD_ORC=OFF
+            if ($LASTEXITCODE -ne 0) { throw "cmake configure failed for compiler-rt/$triple (exit $LASTEXITCODE)" }
+
             cmake --build "compiler-rt-$triple" --config Release --target install-builtins --parallel
+            if ($LASTEXITCODE -ne 0) { throw "cmake build failed for compiler-rt/$triple (exit $LASTEXITCODE)" }
           }
 
       - name: Build libunwind for cross targets
@@ -177,8 +180,14 @@ jobs:
               -DLIBUNWIND_ENABLE_SHARED=OFF `
               -DLIBUNWIND_ENABLE_STATIC=ON `
               -DLIBUNWIND_USE_COMPILER_RT=ON
+            if ($LASTEXITCODE -ne 0) { throw "cmake configure failed for libunwind/$triple (exit $LASTEXITCODE)" }
+
             cmake --build "libunwind-$triple" --config Release --target unwind --parallel
+            if ($LASTEXITCODE -ne 0) { throw "cmake build failed for libunwind/$triple (exit $LASTEXITCODE)" }
+
             cmake --install "libunwind-$triple" --config Release
+            if ($LASTEXITCODE -ne 0) { throw "cmake install failed for libunwind/$triple (exit $LASTEXITCODE)" }
+
             Get-Item "C:/LLVM/lib/$triple/libunwind.a"
           }
 
@@ -198,7 +207,7 @@ jobs:
             C:/LLVM/lib/x86_64-unknown-linux-gnu
             C:/LLVM/lib/aarch64-unknown-linux-gnu
             C:/LLVM/lib/x86_64-w64-windows-gnu
-          key: llvm-runtimes-20.1.6-windows-x64-v2
+          key: llvm-runtimes-20.1.6-windows-x64-v3
 
       # build
 
