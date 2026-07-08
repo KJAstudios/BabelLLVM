@@ -27,6 +27,7 @@ Windows (PowerShell):
 | Flag | Description |
 |------|-------------|
 | `<file>.bbl` | Input source file (required, must have `.bbl` extension) |
+| `-h` / `--help` | Display help information |
 | `-c` | Output to object file instead of executable |
 | `-o <filename>` | Set the output filename |
 | `-target <triple>` / `--target=<triple>` | Select an alternate build target |
