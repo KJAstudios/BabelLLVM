@@ -123,26 +123,29 @@ jobs:
             $triple = $t.triple
             $system = $t.system
             cmake -S llvm-project/compiler-rt -B "compiler-rt-$triple" -G Ninja `
-              -DCMAKE_BUILD_TYPE=Release `
-              -DCMAKE_INSTALL_PREFIX="C:/LLVM" `
-              -DCMAKE_C_COMPILER="C:/LLVM/bin/clang.exe" `
-              -DCMAKE_ASM_COMPILER="C:/LLVM/bin/clang.exe" `
-              -DCMAKE_C_COMPILER_TARGET="$triple" `
-              -DCMAKE_ASM_COMPILER_TARGET="$triple" `
-              -DCMAKE_AR="C:/LLVM/bin/llvm-ar.exe" `
-              -DCMAKE_NM="C:/LLVM/bin/llvm-nm.exe" `
-              -DCMAKE_RANLIB="C:/LLVM/bin/llvm-ranlib.exe" `
-              -DCMAKE_SYSTEM_NAME="$system" `
-              -DCMAKE_SYSROOT="$workspace/Babel/PackagedFiles/dependencies/sysroots/$triple" `
-              -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY `
-              -DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=ON `
-              -DCOMPILER_RT_BUILD_BUILTINS=ON `
-              -DCOMPILER_RT_BUILD_SANITIZERS=OFF `
-              -DCOMPILER_RT_BUILD_XRAY=OFF `
-              -DCOMPILER_RT_BUILD_LIBFUZZER=OFF `
-              -DCOMPILER_RT_BUILD_PROFILE=OFF `
-              -DCOMPILER_RT_BUILD_MEMPROF=OFF `
-              -DCOMPILER_RT_BUILD_ORC=OFF
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_INSTALL_PREFIX="C:/LLVM" `
+            -DCMAKE_C_COMPILER="C:/LLVM/bin/clang.exe" `
+            -DCMAKE_ASM_COMPILER="C:/LLVM/bin/clang.exe" `
+            -DCMAKE_C_COMPILER_TARGET="$triple" `
+            -DCMAKE_ASM_COMPILER_TARGET="$triple" `
+            -DCMAKE_C_FLAGS="--target=$triple --sysroot=$workspace/Babel/PackagedFiles/dependencies/sysroots/$triple" `
+            -DCMAKE_ASM_FLAGS="--target=$triple --sysroot=$workspace/Babel/PackagedFiles/dependencies/sysroots/$triple" `
+            -DCMAKE_AR="C:/LLVM/bin/llvm-ar.exe" `
+            -DCMAKE_NM="C:/LLVM/bin/llvm-nm.exe" `
+            -DCMAKE_RANLIB="C:/LLVM/bin/llvm-ranlib.exe" `
+            -DCMAKE_SYSTEM_NAME="$system" `
+            -DCMAKE_SYSROOT="$workspace/Babel/PackagedFiles/dependencies/sysroots/$triple" `
+            -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY `
+            -DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=ON `
+            -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON `
+            -DCOMPILER_RT_BUILD_BUILTINS=ON `
+            -DCOMPILER_RT_BUILD_SANITIZERS=OFF `
+            -DCOMPILER_RT_BUILD_XRAY=OFF `
+            -DCOMPILER_RT_BUILD_LIBFUZZER=OFF `
+            -DCOMPILER_RT_BUILD_PROFILE=OFF `
+            -DCOMPILER_RT_BUILD_MEMPROF=OFF `
+            -DCOMPILER_RT_BUILD_ORC=OFF
             if ($LASTEXITCODE -ne 0) { throw "cmake configure failed for compiler-rt/$triple (exit $LASTEXITCODE)" }
 
             cmake --build "compiler-rt-$triple" --config Release --target install-builtins --parallel
