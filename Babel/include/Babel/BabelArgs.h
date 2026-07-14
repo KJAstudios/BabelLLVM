@@ -4,7 +4,6 @@
 #include <llvm/TargetParser/Host.h>
 #include <llvm/TargetParser/Triple.h>
 #include <string>
-#include <vector>
 namespace Babel {
 struct BabelArgs {
 private:
@@ -14,9 +13,10 @@ private:
   std::string sysRoot;
   bool objectFileOnly = false;
   bool argError = false;
-  std::vector<std::string> supportedTargets = {"x86_64-unknown-linux-gnu",
-                                               "aarch64-unknown-linux-gnu",
-                                               "x86_64-w64-windows-gnu"};
+  static constexpr std::array<std::string_view, 5> supportedTargets = {
+      "x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu",
+      "x86_64-w64-windows-gnu", "x86_64-pc-linux-gnu",
+      "x86_64-pc-windows-msvc"};
 
 public:
   void SetInputFile(std::string &fileName) { inputFile = fileName; }
@@ -52,13 +52,26 @@ public:
     if (targetTriple.empty()) {
       targetTriple = llvm::sys::getDefaultTargetTriple();
     }
+
+    // convert msvc to use the gnu toolchain, since that's what's bundled with the project
+    if(targetTriple == "x86_64-pc-windows-msvc"){
+      targetTriple = "x86_64-w64-windows-gnu";
+    }
+
+    // If it's x86 pc linux (usually WSL), just switch it to the unknown linux triple 
+    // so we don't run into issues with sysroot names
+    if(targetTriple == "x86_64-pc-linux-gnu"){
+      targetTriple = "x86_64-unknown-linux-gnu";
+    }
+
     targetTriple = llvm::Triple::normalize(targetTriple);
+    
 
     if (!ValidateTargetTriple()) {
       std::cerr << "Target " << targetTriple
                 << " not supported. Targets supported: ";
-                
-      for (std::string &target : supportedTargets) {
+
+      for (std::string_view target : supportedTargets) {
         std::cerr << target;
       }
       std::cerr << '\n';
@@ -70,7 +83,7 @@ public:
 
   bool ValidateTargetTriple() {
 
-    for (std::string &target : supportedTargets) {
+    for (std::string_view target : supportedTargets) {
       if (target == targetTriple) {
         return true;
       }

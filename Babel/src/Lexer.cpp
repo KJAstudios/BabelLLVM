@@ -99,7 +99,7 @@ Babel::TokenData Lexer::GetNextToken() {
   }
 
   // if we reach the end of the buffer, we're at the end of the file/input
-  std::cerr << "End of file reached\n";
+  // std::cerr << "End of file reached\n";
   return {llvm::StringRef(), Token::tok_eof};
 }
 

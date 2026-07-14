@@ -10,6 +10,11 @@ message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 include_directories(${LLVM_INCLUDE_DIRS} include/)
 add_definitions(${LLVM_DEFINITIONS})
 
+option(BABEL_AST_DEBUG_LOGS "Enable verbose AST construction debug logging" OFF)
+if(BABEL_AST_DEBUG_LOGS)
+    add_definitions(-DBABEL_AST_DEBUG_LOGGING=1)
+endif()
+
 file(GLOB_RECURSE SRCS "src/*.cpp")
 
 add_executable(babel ${SRCS})

@@ -392,7 +392,7 @@ Parser::ParseBinaryOpRHS(int precedence,
     // get the precedence of the current operator token
     std::string operatorStr = token.GetTokenString();
     auto operatorPrecedenceIt = operatorPrecedence.find(operatorStr);
-    GetNextToken(); // consume the operator token
+    
 
     // check if it's a valid operator
     if (operatorPrecedenceIt == operatorPrecedence.end()) {
@@ -407,8 +407,12 @@ Parser::ParseBinaryOpRHS(int precedence,
       return leftHandSide;
     }
 
-    // now we continue parsing the right hand side
-    auto RightHandSide = ParseExpression();
+    // consume the operator token after we determine if we can use it here
+    // we want the level up to see it if we don't use it for this expression
+    GetNextToken(); 
+
+    // now we continue parsing the right hand side. It should be a valid value.
+    auto RightHandSide = ParsePrimary();
     if (RightHandSide == nullptr) {
       return nullptr;
     }

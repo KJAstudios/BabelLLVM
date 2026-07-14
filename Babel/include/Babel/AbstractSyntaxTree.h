@@ -4,9 +4,24 @@
 #include "Babel/TokenData.h"
 #include "Babel/Visitor.h"
 #include <llvm/ADT/StringRef.h>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
+
+// AST construction logging, off by default so no build emits it unasked.
+// Enable with `cmake -DBABEL_AST_DEBUG_LOGS=ON ..` (see CMakeLists.txt) to
+// turn it on for a local debugging session.
+#ifndef BABEL_AST_DEBUG_LOGGING
+#define BABEL_AST_DEBUG_LOGGING 0
+#endif
+
+#if BABEL_AST_DEBUG_LOGGING
+#define BABEL_AST_LOG(expr) (void)(std::cerr << expr)
+#else
+#define BABEL_AST_LOG(expr) (void)0
+#endif
+
 namespace Babel {
 class StatementAST {
 private:
@@ -208,8 +223,14 @@ private:
 public:
   IntExpressionAST() = delete;
   IntExpressionAST(TokenLocation location, int value)
-      : ExpressionAST(location), value(value) {}
-  explicit IntExpressionAST(int value) : value(value) {}
+      : ExpressionAST(location), value(value) {
+    BABEL_AST_LOG("[DEBUG] IntExpressionAST created: value=" << value
+               << ", line=" << location.GetLine()
+               << ", column=" << location.GetColumn() << '\n');
+  }
+  explicit IntExpressionAST(int value) : value(value) {
+    BABEL_AST_LOG("[DEBUG] IntExpressionAST created: value=" << value << '\n');
+  }
   int GetValue() const { return value; }
   void Visit(class Visitor &visitor) override {
     visitor.VisitIntExpression(this);
@@ -223,13 +244,38 @@ private:
 public:
   DoubleExpressionAST() = delete;
   DoubleExpressionAST(TokenLocation location, double value)
-      : ExpressionAST(location), value(value) {}
-  explicit DoubleExpressionAST(double value) : value(value) {}
+      : ExpressionAST(location), value(value) {
+    BABEL_AST_LOG("[DEBUG] DoubleExpressionAST created: value=" << value
+               << ", line=" << location.GetLine()
+               << ", column=" << location.GetColumn() << '\n');
+  }
+  explicit DoubleExpressionAST(double value) : value(value) {
+    BABEL_AST_LOG("[DEBUG] DoubleExpressionAST created: value=" << value
+               << '\n');
+  }
   double GetValue() const { return value; }
   void Visit(class Visitor &visitor) override {
     visitor.VisitDoubleExpression(this);
   }
 };
+
+// describes the readily printable data of an expression, used for debug
+// output when constructing nodes that hold other expressions
+inline std::string DescribeExpressionForDebug(ExpressionAST *expr) {
+  if (!expr) {
+    return "<null>";
+  }
+  if (auto *intExpr = dynamic_cast<IntExpressionAST *>(expr)) {
+    return "Int(" + std::to_string(intExpr->GetValue()) + ")";
+  }
+  if (auto *doubleExpr = dynamic_cast<DoubleExpressionAST *>(expr)) {
+    return "Double(" + std::to_string(doubleExpr->GetValue()) + ")";
+  }
+  if (auto *varExpr = dynamic_cast<VariableExpressionAST *>(expr)) {
+    return "Variable(" + *varExpr->GetName() + ")";
+  }
+  return "<expression>";
+}
 
 class BinaryExpressionAST : public ExpressionAST {
 private:
@@ -243,12 +289,25 @@ public:
                       std::unique_ptr<ExpressionAST> lhs,
                       std::unique_ptr<ExpressionAST> rhs)
       : ExpressionAST(location), binaryOperator(std::move(binaryOperator)),
-        lhs(std::move(lhs)), rhs(std::move(rhs)) {}
+        lhs(std::move(lhs)), rhs(std::move(rhs)) {
+    BABEL_AST_LOG("[DEBUG] BinaryExpressionAST created: operator='"
+               << this->binaryOperator
+               << "', lhs=" << DescribeExpressionForDebug(this->lhs.get())
+               << ", rhs=" << DescribeExpressionForDebug(this->rhs.get())
+               << ", line=" << location.GetLine()
+               << ", column=" << location.GetColumn() << '\n');
+  }
   BinaryExpressionAST(std::string binaryOperator,
                       std::unique_ptr<ExpressionAST> lhs,
                       std::unique_ptr<ExpressionAST> rhs)
       : binaryOperator(std::move(binaryOperator)), lhs(std::move(lhs)),
-        rhs(std::move(rhs)) {}
+        rhs(std::move(rhs)) {
+    BABEL_AST_LOG("[DEBUG] BinaryExpressionAST created: operator='"
+               << this->binaryOperator
+               << "', lhs=" << DescribeExpressionForDebug(this->lhs.get())
+               << ", rhs=" << DescribeExpressionForDebug(this->rhs.get())
+               << '\n');
+  }
   std::string *GetBinaryOperator() { return &binaryOperator; }
   ExpressionAST *GetLHS() { return lhs.get(); }
   ExpressionAST *GetRHS() { return rhs.get(); }

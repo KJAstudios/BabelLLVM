@@ -1,12 +1,17 @@
 #include "Babel/TokenData.h"
 #include "Babel/Token.h"
+#include <iostream>
 #include <llvm/ADT/StringRef.h>
 namespace Babel {
 
 TokenData::TokenData(llvm::StringRef tokenString, Token tokenType, int line,
                      int column)
     : tokenString(tokenString), tokenType(tokenType),
-      tokenLocation(line, column) {}
+      tokenLocation(line, column) {
+        // std::cerr << "TokenData created: tokenString=\"" << tokenString.str()
+                  //  << "\", tokenType=" << static_cast<int>(tokenType)
+                  //  << ", line=" << line << ", column=" << column << '\n';
+      }
 
 Token TokenData::GetTokenType() { return tokenType; }
 

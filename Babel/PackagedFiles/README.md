@@ -51,7 +51,8 @@ Windows (PowerShell):
 | `-sysroot <path>` / `--sysroot=<path>` | Provide an alternate sysroot |
 
 ## Cross Compiling
-Babel can be cross compiled between Linux x86, Linux ARM64, and Windows x86. The build for each platform is bundled with Clang and LLD, as well as the required sysroots to facilitate cross compliation. If you wish, a different sysroot can be passed in via the `--sysroot=` options, as long as it matches the given `--target=`. Babel supports  `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`, and `x86_64-w64-windows-gnu`
+Babel can be cross compiled between Linux x86, Linux ARM64, and Windows x86. The build for each platform is bundled with Clang and LLD, as well as the required sysroots to facilitate cross compliation. If you wish, a different sysroot can be passed in via the `--sysroot=` options, as long as it matches the given `--target=`. Babel supports  `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`,`x86_64-pc-linux-gnu`, `x86_64-pc-windows-msvc` and `x86_64-w64-windows-gnu`.
+Note: `x86_64-pc-windows-msvc`will resolve to `x86_64-w64-windows-gnu` as the bundled toolchain uses clang instead of mingw.
 
 Linux / macOS:
 ```bash

@@ -2,10 +2,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug babel-llvm",
+            "name": "Debug babel",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/build/babel-llvm",
+            "program": "${workspaceFolder}/build/babel",
             "args": ["${workspaceFolder}/build/test.bbl"],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "CMake: build"
