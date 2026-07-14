@@ -4,6 +4,8 @@
 #include <llvm/TargetParser/Host.h>
 #include <llvm/TargetParser/Triple.h>
 #include <string>
+#include <string_view>
+#include <array>
 namespace Babel {
 struct BabelArgs {
 private:
