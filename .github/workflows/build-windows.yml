@@ -274,9 +274,12 @@ jobs:
           foreach ($triple in "x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-w64-windows-gnu") {
             New-Item -ItemType Directory -Force -Path "staging/dependencies/lib/clang/20/lib/$triple" | Out-Null
 
-            $builtins = "C:/LLVM/lib/$triple/libclang_rt.builtins.a"
+            $builtinsSrcName = if ($triple -eq "x86_64-w64-windows-gnu") { "clang_rt.builtins.lib" } else { "libclang_rt.builtins.a" }
+            $builtins = "C:/LLVM/lib/$triple/$builtinsSrcName"
+            $builtinsDestName = "libclang_rt.builtins.a"   # clang's link driver always wants this name, regardless of build-time output name
+
             if (Test-Path $builtins) {
-              cp $builtins "staging/dependencies/lib/clang/20/lib/$triple/"
+              cp $builtins "staging/dependencies/lib/clang/20/lib/$triple/$builtinsDestName"
             } else {
               Write-Host "WARNING: missing builtins for $triple"
             }
